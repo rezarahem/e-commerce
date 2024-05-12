@@ -1,13 +1,20 @@
 'use client';
 
 import { toEnglishNumber, toPersianNumber } from '@/libs/persian-string';
-import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { cn } from '@/libs/utils';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useCountdown } from 'usehooks-ts';
 import Link from 'next/link';
+import { CheckUserPhoneNumberAction } from '@/action/auth/check-user-phone-number-action';
+import { CreateUserAction } from '@/action/auth/create-user-action';
+import { Otp } from '@/action/otp';
+import { LoginAction } from '@/action/auth/login-action';
+
+const inputStyleString = 'border rounded-md p-2 text-sm shadow-sm';
+const buttonStyleString =
+  'bg-black text-white p-2 rounded-md hover:bg-zinc-800 disabled:bg-gray-500 disabled:hover:cursor-not-allowed flex items-center justify-center gap-x-2 shadow-sm';
 
 const LoginForm = () => {
   const [loading, setLoading] = useState(false);
@@ -113,10 +120,8 @@ const LoginForm = () => {
         return;
       }
 
-      await signIn('credentials', {
-        phoneNumber,
-        callbackUrl: '/',
-      });
+      await LoginAction({ phone: phoneNumber });
+
       toast.success('شما با موفقیت وارد شدید');
     } catch (error) {
       toast.error('خطایی رخ داد');
@@ -146,10 +151,6 @@ const LoginForm = () => {
       setLoading(false);
     }
   };
-
-  const inputStyleString = 'border rounded-md p-2 text-sm shadow-sm';
-  const buttonStyleString =
-    'bg-black text-white p-2 rounded-md hover:bg-zinc-800 disabled:bg-gray-500 disabled:hover:cursor-not-allowed flex items-center justify-center gap-x-2 shadow-sm';
 
   const userPhoneInput = (
     <>
@@ -275,6 +276,7 @@ const LoginForm = () => {
     <div className='w-full px-5'>
       <div className='mx-auto space-y-7 md:w-[502px]'>
         <div className='mb-12 flex items-center justify-between'>
+          <p className='text-2xl font-black capitalize'>logo</p>
           <Link href='/' className='rounded-md p-2 hover:bg-slate-500/15'>
             <ArrowLeft />
           </Link>

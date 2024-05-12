@@ -1,36 +1,35 @@
-import { drizzleDb } from '@/drizzle/drizzle-db';
 import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import NextAuth from 'next-auth';
 import authConfig from '@/auth.config';
 import { users, userRole } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 import Credentials from 'next-auth/providers/credentials';
-import Google from 'next-auth/providers/google';
+import { drizzleDb } from './drizzle/drizzle-db';
+import { LoginSchema } from './schemas';
 
-export const { handlers, auth } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(drizzleDb),
   ...authConfig,
   providers: [
-    Google,
     Credentials({
-      name: 'credentials',
-      credentials: {
-        phone: {
-          label: 'phone',
-          type: 'text',
-        },
-      },
       async authorize(credentials) {
-        if (!credentials?.phone) return null;
+        if (!credentials) return null;
 
-        const user = await drizzleDb.query.users.findFirst({
-          where: (users, { eq }) =>
-            eq(users.phone, credentials.phone as string),
-        });
+        const validatedFields = LoginSchema.safeParse(credentials);
 
-        if (!user) return null;
+        if (validatedFields.success) {
+          const { phone } = validatedFields.data;
 
-        return user;
+          const user = await drizzleDb.query.users.findFirst({
+            where: (users, { eq }) => eq(users.phone, phone),
+          });
+
+          if (!user) return null;
+
+          return user;
+        }
+
+        return null;
       },
     }),
   ],

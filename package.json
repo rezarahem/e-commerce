@@ -1,5 +1,5 @@
 {
-  "name": "e-com",
+  "name": "e-commerce",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.0.1",
+    "axios": "^1.6.8",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.30.10",
     "framer-motion": "^11.1.9",
@@ -25,7 +26,8 @@
     "react-hot-toast": "^2.4.1",
     "sharp": "^0.33.3",
     "tailwind-merge": "^2.3.0",
-    "usehooks-ts": "^3.1.0"
+    "usehooks-ts": "^3.1.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20",
