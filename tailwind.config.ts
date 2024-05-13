@@ -6,6 +6,7 @@ const config: Config = {
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  darkMode: 'class',
   theme: {
     fontWeight: {
       // thin: '50',
@@ -23,6 +24,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sanX: ['var(--font-iransansxv)'],
+        jersey: ['var(--font-jersey)'],
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

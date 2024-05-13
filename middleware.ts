@@ -5,8 +5,8 @@ import {
   apiAuthPrefix,
   authRoutes,
   publicRoutes,
+  adminRoot,
 } from '@/routes';
-
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
@@ -16,6 +16,7 @@ export default auth((req) => {
   const isApiAuthRoutes = nextUrl.pathname.startsWith(apiAuthPrefix);
   const isAuthRoutes = authRoutes.includes(nextUrl.pathname);
   const isPublicRoutes = publicRoutes.includes(nextUrl.pathname);
+  const isAdminRoutes = nextUrl.pathname.startsWith(adminRoot);
 
   if (isApiAuthRoutes) return;
 
@@ -28,6 +29,9 @@ export default auth((req) => {
 
   if (!isLoggedIn && !isPublicRoutes)
     return Response.redirect(new URL('/login', nextUrl));
+
+  // if (isAdminRoutes && String(req.auth?.user.role) !== 'ADMIN')
+  //   return Response.redirect(new URL('/user', nextUrl));
 
   return;
 });

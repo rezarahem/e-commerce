@@ -18,6 +18,6 @@ export const users = pgTable('user', {
   name: text('name'),
   email: text('email').unique(),
   phone: text('phone').notNull().unique(),
-  role: userRole('role').default('USER').notNull(),
+  role: userRole('role').notNull().default('USER'),
   image: text('image'),
 });
