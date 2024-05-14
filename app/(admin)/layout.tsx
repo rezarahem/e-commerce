@@ -1,4 +1,5 @@
 import { auth } from '@/auth';
+import ControlNavbar from '@/components/control/control-navbar';
 import { redirect } from 'next/navigation';
 
 const ControlLayout = async ({
@@ -10,7 +11,12 @@ const ControlLayout = async ({
 
   if (session?.user.role.toString() !== 'ADMIN') redirect('/user');
 
-  return <>{children}</>;
+  return (
+    <>
+      <ControlNavbar />
+      {children}
+    </>
+  );
 };
 
 export default ControlLayout;
