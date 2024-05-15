@@ -40,7 +40,7 @@ const ControlNavLinks = ({ className }: ControlNavLinksProps) => {
   ];
 
   return (
-    <nav className={cn('flex items-center gap-x-6', className)}>
+    <div className={cn('flex items-center gap-x-6', className)}>
       {routesLinks.map((route) => (
         <Link
           key={route.href}
@@ -53,7 +53,7 @@ const ControlNavLinks = ({ className }: ControlNavLinksProps) => {
           {route.label}
         </Link>
       ))}
-    </nav>
+    </div>
   );
 };
 
