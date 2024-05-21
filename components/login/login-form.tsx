@@ -1,9 +1,9 @@
 'use client';
 
-import { toEnglishNumber, toPersianNumber } from '@/libs/persian-string';
+import { toEnglishNumber, toPersianNumber } from '@/lib/persian-string';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { cn } from '@/libs/utils';
+import { cn } from '@/lib/utils';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useCountdown } from 'usehooks-ts';
 import Link from 'next/link';

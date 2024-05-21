@@ -3,7 +3,6 @@
 import { drizzleDb } from '@/drizzle/drizzle-db';
 import { Otp } from '../otp';
 import { users } from '@/drizzle/schema';
-import { DrizzleError } from 'drizzle-orm';
 
 export const CreateUserAction = async (
   userName: string,

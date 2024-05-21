@@ -1,0 +1,2 @@
+ALTER TABLE "category" ADD COLUMN "category_address_name" text NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "category_address_name_index" ON "category" ("category_address_name");

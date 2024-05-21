@@ -22,21 +22,21 @@ const ControlNavLinks = ({ className }: ControlNavLinksProps) => {
     //   label: 'سفارش‌ها',
     //   active: pathname === '/control/orders',
     // },
-    // {
-    //   href: '/control/products',
-    //   label: 'محصولات',
-    //   active: pathname === '/control/products',
-    // },
+    {
+      href: '/control/products',
+      label: 'محصولات',
+      active: pathname === '/control/products',
+    },
     {
       href: '/control/categories',
       label: 'دسته‌بندی‌ها',
       active: pathname === '/control/categories',
     },
-    // {
-    //   href: '/control/main-slider',
-    //   label: 'اسلایدر',
-    //   active: pathname === '/control/main-slider',
-    // },
+    {
+      href: '/control/settings',
+      label: 'تنظیمات',
+      active: pathname === '/control/setttings',
+    },
   ];
 
   return (

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
 import { ToastProvider } from '@/providers/toast-provider';
-import { cn } from '@/libs/utils';
+import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { Jersey_15 } from 'next/font/google';
 

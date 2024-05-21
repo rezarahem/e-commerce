@@ -113,6 +113,20 @@
       "when": 1715803250184,
       "tag": "0015_striped_daimon_hellstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1715887260261,
+      "tag": "0016_real_switch",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1716224495406,
+      "tag": "0017_petite_wild_pack",
+      "breakpoints": true
     }
   ]
 }

@@ -1,24 +1,23 @@
 import { Button } from '@/components/ui/button';
 import Container from '@/components/ui/container';
 import Heading from '@/components/ui/heading';
-import { Separator } from '@/components/ui/separator';
 import { drizzleDb } from '@/drizzle/drizzle-db';
 import { toPersianNumber } from '@/lib/persian-string';
-import { PlusIcon } from 'lucide-react';
 import Link from 'next/link';
+import { PlusIcon } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
-const CategoriesPage = async () => {
-  // get all categories
-  const allCats = await drizzleDb.query.category.findMany();
+const ProductsPage = async () => {
+  const allProducts = await drizzleDb.query.product.findMany();
 
   return (
     <Container defualtPY className='space-y-3'>
       <div className='flex items-center justify-between'>
         <Heading
-          title={`دسته‌بندی‌ها (${toPersianNumber(String(allCats.length))})`}
-          description='مدیریت دسته‌بندی‌ها'
+          title={`محصولات (${toPersianNumber(String(allProducts.length))})`}
+          description='مدیریت محصولات'
         />
-        <Link href='/control/categories/new'>
+        <Link href='/control/products/0000'>
           <Button className='flex items-center justify-center gap-x-1'>
             <p>افزودن</p>
             <PlusIcon className='-ml-[6px] size-4' />
@@ -26,9 +25,9 @@ const CategoriesPage = async () => {
         </Link>
       </div>
       <Separator />
-      <div>todo: cat table</div>
+      <div>todo: products table</div>
     </Container>
   );
 };
 
-export default CategoriesPage;
+export default ProductsPage;
