@@ -35,12 +35,6 @@ export const category = pgTable(
     categoryName: text('category_name').unique().notNull(),
     categoryAddressName: text('category_address_name').notNull(),
     parentId: integer('parent_id'),
-    createdAt: timestamp('created_at', { mode: 'string' })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp('updated_at', { mode: 'string' })
-      .notNull()
-      .defaultNow(),
   },
   (table) => {
     return {
@@ -72,14 +66,63 @@ export const product = pgTable('product', {
   specialPrice: numeric('special_price').notNull(),
   inventoryNumber: integer('inventory_number').notNull(),
   buyLimit: integer('buy_limit').notNull(),
-  // thumbnailImage: text('thumbnail_image').notNull(),
+  thumbnailImage: text('thumbnail_image').notNull(),
   createdAt: timestamp('created_at', { mode: 'string' }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { mode: 'string' }).notNull().defaultNow(),
 });
 
 export const productRelations = relations(product, ({ one, many }) => ({
   productToCategory: many(productToCategory),
+  images: many(productImages),
+  productFeatureGroup: many(productFeatureGroup),
 }));
+
+export const productImages = pgTable('product_images', {
+  id: serial('id').primaryKey(),
+  url: text('url').notNull(),
+  productId: integer('product_id'),
+});
+
+export const productIamgesRelations = relations(productImages, ({ one }) => ({
+  product: one(product, {
+    fields: [productImages.productId],
+    references: [product.id],
+  }),
+}));
+
+export const productFeatureGroup = pgTable('product_feature_group', {
+  id: serial('id').primaryKey(),
+  groupName: text('group_name').notNull(),
+  productId: integer('product_id'),
+});
+
+export const productFeatureGroupRelations = relations(
+  productFeatureGroup,
+  ({ one, many }) => ({
+    product: one(product, {
+      fields: [productFeatureGroup.productId],
+      references: [product.id],
+    }),
+    productFeaturePairs: many(productFeaturePairs),
+  }),
+);
+
+export const productFeaturePairs = pgTable('product_feature_pairs', {
+  id: serial('id').primaryKey(),
+  featureKey: text('feature_key').notNull(),
+  featureValue: text('feature_value').notNull(),
+  productFeaturGroupId: integer('product_feature_group_id'),
+});
+
+export const productFeaturePairsRelations = relations(
+  productFeaturePairs,
+  ({ one }) => ({
+    productFeatureGroup: one(productFeatureGroup, {
+      fields: [productFeaturePairs.productFeaturGroupId],
+      references: [productFeatureGroup.id],
+    }),
+  }),
+);
 
 export const productToCategory = pgTable(
   'product_to_category',

@@ -12,7 +12,6 @@ export const main = async () => {
   });
 
   await migrationClient.end();
-  console.log('m done');
 };
 
 main().catch((err) => {

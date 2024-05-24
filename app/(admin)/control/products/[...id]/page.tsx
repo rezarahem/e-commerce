@@ -24,6 +24,12 @@ const ProuductFormPage = async ({
   const product = await drizzleDb.query.product.findFirst({
     where: eq(productSchema.id, +params.id[0]),
     with: {
+      productFeatureGroup: {
+        with: {
+          productFeaturePairs: true,
+        },
+      },
+      images: true,
       productToCategory: {
         with: {
           category: true,
@@ -31,6 +37,10 @@ const ProuductFormPage = async ({
       },
     },
   });
+
+  const productImages = product?.images.map((image) => image.url);
+
+  const productFeatures = product?.productFeatureGroup;
 
   const relatedCategoriesId = product?.productToCategory.map(({ category }) => {
     return {
@@ -44,6 +54,8 @@ const ProuductFormPage = async ({
     <Container defualtPY className='space-y-3'>
       <ProductForm
         product={product}
+        productImages={productImages}
+        productFeatures={productFeatures}
         relatedCategoriesId={relatedCategoriesId}
         allCategories={allCategories}
       />

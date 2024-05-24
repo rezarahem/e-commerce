@@ -1,7 +1,11 @@
 'use server';
 
 import { FileListSchema } from '@/schemas';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 
 const s3 = new S3Client({
   region: 'default',
@@ -12,66 +16,117 @@ const s3 = new S3Client({
   },
 });
 
-// export async function s3UploadAction(data: FormData) {
-//   const file: File | null = data.get('file') as File;
-//   if (!file) throw new Error('no file');
-//   const bytes = await file.arrayBuffer();
-//   const buffer = Buffer.from(bytes);
-
-//   const supImage = `${Date.now()}_${file.name}`;
-
-//   const params = {
-//     Body: buffer,
-//     Bucket: process.env.LIARA_BUCKET_NAME as string,
-//     Key: supImage,
-//   };
-
-//   try {
-//     await s3.send(new PutObjectCommand(params));
-//     return {
-//       success: true,
-//       imagePath: `https://sup.storage.iran.liara.space/${supImage}`,
-//     };
-//   } catch (error) {
-//     return {
-//       error,
-//     };
-//   }
-// }
-
-export const S3UploadAction = async (data: FormData) => {
-  const filesArray: File[] = [];
-
-  for (const [, file] of data.entries()) {
-    if (file instanceof File) {
-      filesArray.push(file);
+export const S3UploadAction = async (
+  data: FormData,
+): Promise<
+  | {
+      success: boolean;
+      imagesUrl: string[];
+      errorMessage: string;
     }
-  }
+  | undefined
+> => {
+  try {
+    const filesArray: File[] = [];
+    const imagesUrl: string[] = [];
 
-  const validatedFiles = FileListSchema.safeParse(filesArray);
-  if (!validatedFiles.success) {
-    console.log('not good-server');
-    return;
-  }
+    for (const [, file] of data.entries()) {
+      if (file instanceof File) {
+        filesArray.push(file);
+      }
+    }
 
-  for (const file of filesArray) {
-    const bytes = await file.arrayBuffer();
+    const validatedFiles = FileListSchema.safeParse(filesArray);
+    if (!validatedFiles.success) {
+      return {
+        success: false,
+        imagesUrl,
+        errorMessage: 'فایل غیر مجاز',
+      };
+    }
+
+    for (const file of filesArray) {
+      try {
+        const bytes = await file.arrayBuffer();
+        const fileKey = `${Date.now()}_${file.name}`;
+
+        const params = {
+          Body: Buffer.from(bytes),
+          Bucket: process.env.LIARA_BUCKET_NAME as string,
+          Key: fileKey,
+          ContentType: file.type,
+        };
+        const res = await s3.send(new PutObjectCommand(params));
+
+        // some vlidation for s3
+        if (res.$metadata.httpStatusCode === 200) {
+          imagesUrl.push(`${process.env.LIARA_BUCKET_ADDRESS}/${fileKey}`);
+        } else {
+          console.log(
+            `Failed to upload ${file.name}: Received status code ${res.$metadata.httpStatusCode}`,
+          );
+        }
+      } catch (error) {
+        console.log('[S3UploadAction - single]', error);
+      }
+    }
+
+    return {
+      success: true,
+      imagesUrl,
+      errorMessage: '',
+    };
+  } catch (error) {
+    console.log('[S3UploadAction]', error);
+  }
+};
+
+export const S3DeleteAction = async (
+  url: string,
+): Promise<
+  | {
+      success: boolean;
+      errorMessage: string;
+    }
+  | undefined
+> => {
+  try {
+    if (!url) {
+      return {
+        success: false,
+        errorMessage: 'Invalid Inputs',
+      };
+    }
+
+    const segments = url.split('/');
+    const fileKey = segments[segments.length - 1];
+
+    if (!fileKey) {
+      return {
+        success: false,
+        errorMessage: 'Invalid Inputs',
+      };
+    }
 
     const params = {
-      Body: Buffer.from(bytes),
       Bucket: process.env.LIARA_BUCKET_NAME as string,
-      Key: `${Date.now()}_${file.name}`,
-      ContentType: file.type,
+      Key: fileKey,
     };
 
-    try {
-      await s3.send(new PutObjectCommand(params));
-      console.log(`${file.name} uploaded successfully`);
-    } catch (error) {
-      console.error(`Error uploading ${file.name}:`, error);
-      throw error; // Optionally rethrow the error to handle it further up
-    }
-  }
+    const res = await s3.send(new DeleteObjectCommand(params));
 
-  console.log('ok');
+    if (res.$metadata.httpStatusCode !== 204) {
+      return {
+        success: false,
+        errorMessage: 'Operation failed',
+      };
+    } else {
+      return {
+        success: true,
+        errorMessage: '',
+      };
+    }
+  } catch (error) {
+    console.log('[S3DeleteAction]', error);
+  }
 };

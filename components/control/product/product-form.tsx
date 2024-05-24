@@ -23,15 +23,21 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import {
-  category,
   category as categorySchema,
+  productFeatureGroup,
+  productFeaturePairs,
   product as productSchema,
-  productToCategory,
 } from '@/drizzle/schema';
 import { cn } from '@/lib/utils';
 import { FileListSchema, ProductFormSchema } from '@/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckIcon, FlagTriangleRight, ImagePlus, Trash } from 'lucide-react';
+import {
+  CheckIcon,
+  FlagTriangleRight,
+  ImagePlus,
+  Trash,
+  X,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   ChangeEvent,
@@ -56,49 +62,47 @@ import {
   toPersianNumber,
 } from '@/lib/persian-string';
 import { Textarea } from '@/components/ui/textarea';
-import { S3UploadAction } from '@/action/upload/s3-bucket-action';
+import {
+  S3DeleteAction,
+  S3UploadAction,
+} from '@/action/upload/s3-bucket-action';
+import toast from 'react-hot-toast';
 
 type ProductFormProps = {
   product: typeof productSchema.$inferSelect | undefined;
+  productImages: string[] | undefined;
+  productFeatures:
+    | {
+        id: number;
+        productId: number | null;
+        groupName: string;
+        productFeaturePairs: {
+          id: number;
+          featureKey: string;
+          featureValue: string;
+          productFeaturGroupId: number | null;
+        }[];
+      }[]
+    | undefined;
   relatedCategoriesId: { id: number }[] | undefined;
   allCategories: (typeof categorySchema.$inferSelect)[];
 };
 
 type ProductFormFieldTypes = z.infer<typeof ProductFormSchema>;
 
-const onUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-  const files = e.target.files;
-  // if null ask user to upload atleast one image
-  if (!files) {
-    console.log('null');
-    return;
-  }
-
-  const filesArray = Array.from(files);
-  // const currentImagePathArray = [...form.getValues('images')];
-
-  const validatedFiles = FileListSchema.safeParse(filesArray);
-  if (!validatedFiles.success) {
-    console.log('not good-client');
-    return;
-  }
-
-  const formData = new FormData();
-  filesArray.forEach((file) => {
-    formData.append('files', file);
-  });
-
-  await S3UploadAction(formData);
-};
-
 const ProductForm = ({
   product,
+  productImages,
+  productFeatures,
   relatedCategoriesId,
   allCategories,
 }: ProductFormProps) => {
   const [isPending, startTransition] = useTransition();
   const [openAlertModal, setOpenAlertModal] = useState(false);
   const [openCombobox, setOpenCombobox] = useState(false);
+  const [thumbnailImageState, setThumbnailImageState] = useState(
+    product?.thumbnailImage ?? '',
+  );
   const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -109,6 +113,7 @@ const ProductForm = ({
       ]);
     }
   }, []);
+
   const { getRootProps, getInputProps, isDragActive, isFocused } = useDropzone({
     onDrop,
     multiple: true,
@@ -117,7 +122,17 @@ const ProductForm = ({
   const router = useRouter();
 
   useEffect(() => {
-    console.log(imageFiles);
+    if (imageFiles.length === 0) return;
+
+    const validatedFiles = FileListSchema.safeParse(imageFiles);
+    if (!validatedFiles.success) {
+      const errorArray = validatedFiles.error.errors;
+      form.setError('images', {
+        message: errorArray[errorArray.length - 1].message,
+      });
+    } else {
+      onUpload();
+    }
   }, [imageFiles]);
 
   const title = product ? 'ویرایش محصول' : 'ایجاد محصول';
@@ -155,9 +170,90 @@ const ProductForm = ({
           )
         : '',
       productDescription: product?.productDescription ?? '',
-      images: [],
+      thumbnailImage: thumbnailImageState,
+      images: productImages ?? [],
+      productFeatures: [],
     },
   });
+
+  const handleInputFileOnChange = (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.target.files;
+    if (!files) {
+      console.log('null');
+      return;
+    }
+    const filesArray = Array.from(files);
+
+    setImageFiles((prevFiles) => [...prevFiles, ...filesArray]);
+  };
+
+  const onUpload = async () => {
+    try {
+      startTransition(async () => {
+        const formData = new FormData();
+        imageFiles.forEach((file) => {
+          formData.append('files', file);
+        });
+        const res = await S3UploadAction(formData);
+
+        if (!res) {
+          toast.error('خطایی رخ داد');
+          return;
+        }
+
+        if (!res?.success) {
+          toast.error(res?.errorMessage);
+          return;
+        }
+
+        if (res.success && res.imagesUrl) {
+          form.setValue('images', [
+            ...form.getValues('images'),
+            ...res.imagesUrl,
+          ]);
+        }
+
+        setImageFiles([]);
+      });
+    } catch (error) {
+      toast.error('خطایی رخ داد');
+    }
+  };
+
+  const onDeleteProductImage = (url: string) => {
+    try {
+      startTransition(async () => {
+        const res = await S3DeleteAction(url);
+
+        if (!res) {
+          toast.error('خطایی رخ داد');
+          return;
+        }
+
+        if (!res?.success) {
+          toast.error(res?.errorMessage);
+          return;
+        }
+
+        if (res.success) {
+          // removing the image from thumbnail if IT IS THUMBNAIL
+          if (form.getValues('thumbnailImage') === url) {
+            setThumbnailImageState('');
+            form.setValue('thumbnailImage', '');
+          }
+
+          // removing the image from images url array
+          form.setValue('images', [
+            ...form.getValues('images').filter((image) => image !== url),
+          ]);
+        }
+      });
+    } catch (error) {
+      toast.error('خطایی رخ داد');
+    }
+  };
 
   const onDelete = async () => {};
 
@@ -484,7 +580,13 @@ const ProductForm = ({
                   <FormLabel htmlFor='images'>تصاویر</FormLabel>
                   <FormControl className='p-4'>
                     <div className='space-y-5 rounded-md bg-gray-50'>
-                      <div {...getRootProps()}>
+                      <div
+                        {...getRootProps({
+                          onClick: (e) => {
+                            e.preventDefault();
+                          },
+                        })}
+                      >
                         <label
                           className={cn(
                             'flex cursor-pointer items-center justify-center rounded border-2 border-dashed py-20 hover:opacity-60',
@@ -498,7 +600,7 @@ const ProductForm = ({
                             id='images'
                             type='file'
                             multiple
-                            onChange={onUpload}
+                            onChange={handleInputFileOnChange}
                             disabled={isPending}
                             hidden
                           />
@@ -522,27 +624,13 @@ const ProductForm = ({
                                   variant='destructive'
                                   size='icon'
                                   type='button'
-                                  // onClick={() => {
-                                  //   if (
-                                  //     thumbnailImageStateObject.isThumbnail &&
-                                  //     thumbnailImageStateObject.url ===
-                                  //       image.url
-                                  //   ) {
-                                  //     setThumbnailImageStateObject({
-                                  //       isThumbnail: false,
-                                  //       url: '',
-                                  //     });
-                                  //   }
-
-                                  //   field.onChange([
-                                  //     ...field.value.filter(
-                                  //       (currentImage) =>
-                                  //         currentImage.url !== image.url,
-                                  //     ),
-                                  //   ]);
-                                  // }}
+                                  disabled={isPending}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    onDeleteProductImage(url);
+                                  }}
                                 >
-                                  <Trash className='h-4 w-4' />
+                                  <Trash className='size-4' />
                                 </Button>
                               </div>
                               <div className='absolute left-12 top-2 z-10'>
@@ -550,16 +638,18 @@ const ProductForm = ({
                                   variant='ghost'
                                   size='icon'
                                   type='button'
-                                  // onClick={() => {
-                                  //   setThumbnailImage(image.url);
-                                  // }}
+                                  disabled={isPending}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setThumbnailImageState(url);
+                                    form.setValue('thumbnailImage', url);
+                                  }}
                                   className={cn(
                                     'bg-gray-400 text-slate-700 hover:bg-gray-300',
-                                    // {
-                                    //   'bg-green-500 text-white hover:bg-green-400 hover:text-white':
-                                    //     thumbnailImageStateObject.url ===
-                                    //     image.url,
-                                    // },
+                                    {
+                                      'bg-green-500 text-white hover:bg-green-400 hover:text-white':
+                                        thumbnailImageState === url,
+                                    },
                                   )}
                                 >
                                   <FlagTriangleRight className='h-4 w-4' />
@@ -570,6 +660,8 @@ const ProductForm = ({
                                 src={url}
                                 fill
                                 priority={true}
+                                sizes='100vw'
+                                className='object-cover'
                               />
                             </div>
                           ))}
@@ -577,6 +669,7 @@ const ProductForm = ({
                       )}
                     </div>
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />

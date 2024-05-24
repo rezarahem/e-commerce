@@ -30,7 +30,16 @@ export const CategoryFormShema = z.object({
   currentCategoryId: z.number().optional(),
 });
 
-// todo: prevent user from typing text in nubmer fields
+export const ProductFeatureSchema = z.object({
+  groupName: z.string().optional(),
+  pairs: z
+    .object({
+      featureKey: z.string(),
+      featureValue: z.string(),
+    })
+    .array(),
+});
+
 export const ProductFormSchema = z.object({
   productName: z
     .string({ required_error: 'ثبت عنوان محصول الزامی است.' })
@@ -95,7 +104,9 @@ export const ProductFormSchema = z.object({
     )
     .refine((value) => value[0] !== '۰', 'مقدار غیر مجاز است.'),
   productDescription: z.string().optional(),
+  thumbnailImage: z.string(),
   images: z.string().array(),
+  productFeatures: z.array(ProductFeatureSchema),
 });
 
 export const FileSchema = z
