@@ -4,7 +4,7 @@ import './globals.css';
 import { ToastProvider } from '@/providers/toast-provider';
 import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/providers/theme-provider';
-import { Jersey_15 } from 'next/font/google';
+// import { Jersey_15 } from 'next/font/google';
 
 const mainFont = localFont({
   src: '../fonts/IRANSansXV.woff2',
@@ -12,12 +12,12 @@ const mainFont = localFont({
   display: 'block',
 });
 
-const jersey = Jersey_15({
-  weight: '400',
-  subsets: ['latin'],
-  display: 'block',
-  variable: '--font-jersey',
-});
+// const jersey = Jersey_15({
+//   weight: '400',
+//   subsets: ['latin'],
+//   display: 'block',
+//   variable: '--font-jersey',
+// });
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html dir='rtl' lang='fa-Ir'>
-      <body className={cn('font-sanX', mainFont.variable, jersey.variable)}>
+      <body className={cn('font-sanX', mainFont.variable)}>
         <ThemeProvider attribute='class' disableTransitionOnChange enableSystem>
           <ToastProvider />
           {children}

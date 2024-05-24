@@ -30,14 +30,30 @@ export const CategoryFormShema = z.object({
   currentCategoryId: z.number().optional(),
 });
 
+// export const ProductFeaturesSchema = z
+//   .object({
+//     featureId: z.string(),
+//     featureName: z.string().optional(),
+//     pairs: z
+//       .object({
+//         pairId: z.string(),
+//         pairKey: z.string(),
+//         pairValue: z.string(),
+//       })
+//       .array(),
+//   })
+//   .array();
+
+export const ProductFeaturePairSchema = z.object({
+  pairId: z.string(),
+  pairKey: z.string(),
+  pairValue: z.string(),
+});
+
 export const ProductFeatureSchema = z.object({
-  groupName: z.string().optional(),
-  pairs: z
-    .object({
-      featureKey: z.string(),
-      featureValue: z.string(),
-    })
-    .array(),
+  featureId: z.string(),
+  featureName: z.string().optional(),
+  pairs: z.array(ProductFeaturePairSchema),
 });
 
 export const ProductFormSchema = z.object({

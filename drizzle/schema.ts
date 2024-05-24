@@ -74,7 +74,7 @@ export const product = pgTable('product', {
 export const productRelations = relations(product, ({ one, many }) => ({
   productToCategory: many(productToCategory),
   images: many(productImages),
-  productFeatureGroup: many(productFeatureGroup),
+  productFeatures: many(productFeatures),
 }));
 
 export const productImages = pgTable('product_images', {
@@ -90,17 +90,18 @@ export const productIamgesRelations = relations(productImages, ({ one }) => ({
   }),
 }));
 
-export const productFeatureGroup = pgTable('product_feature_group', {
+export const productFeatures = pgTable('product_features', {
   id: serial('id').primaryKey(),
-  groupName: text('group_name').notNull(),
+  featureId: text('feature_id').notNull(),
+  featureName: text('feature_name'),
   productId: integer('product_id'),
 });
 
-export const productFeatureGroupRelations = relations(
-  productFeatureGroup,
+export const productFeaturesRelations = relations(
+  productFeatures,
   ({ one, many }) => ({
     product: one(product, {
-      fields: [productFeatureGroup.productId],
+      fields: [productFeatures.productId],
       references: [product.id],
     }),
     productFeaturePairs: many(productFeaturePairs),
@@ -109,17 +110,18 @@ export const productFeatureGroupRelations = relations(
 
 export const productFeaturePairs = pgTable('product_feature_pairs', {
   id: serial('id').primaryKey(),
-  featureKey: text('feature_key').notNull(),
-  featureValue: text('feature_value').notNull(),
-  productFeaturGroupId: integer('product_feature_group_id'),
+  pairId: text('pair_id').notNull(),
+  pairKey: text('pair_key').notNull(),
+  pairValue: text('pair_value').notNull(),
+  productFeatureId: integer('product_feature_id'),
 });
 
 export const productFeaturePairsRelations = relations(
   productFeaturePairs,
   ({ one }) => ({
-    productFeatureGroup: one(productFeatureGroup, {
-      fields: [productFeaturePairs.productFeaturGroupId],
-      references: [productFeatureGroup.id],
+    productFeatures: one(productFeatures, {
+      fields: [productFeaturePairs.productFeatureId],
+      references: [productFeatures.id],
     }),
   }),
 );

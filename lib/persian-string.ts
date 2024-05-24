@@ -87,3 +87,27 @@ export const millisecondsToSecondsDifference = (
 
   return Math.round(differenceInSeconds);
 };
+
+export const generateRandomUniqueString = (length: number) => {
+  const charset =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const cryptoObj = window.crypto || (window as any).msCrypto; // for IE 11
+
+  if (cryptoObj && cryptoObj.getRandomValues) {
+    const randomValues = new Uint8Array(length);
+    cryptoObj.getRandomValues(randomValues);
+    for (let i = 0; i < length; i++) {
+      result += charset.charAt(randomValues[i] % charset.length);
+    }
+  } else {
+    for (let i = 0; i < length; i++) {
+      result += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+  }
+
+  return result;
+  // Example usage:
+  // const uniqueString = generateRandomUniqueString(16);
+  // console.log(uniqueString);
+};

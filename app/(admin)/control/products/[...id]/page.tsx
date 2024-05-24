@@ -2,9 +2,10 @@ import ProductForm from '@/components/control/product/product-form';
 import Container from '@/components/ui/container';
 import { drizzleDb } from '@/drizzle/drizzle-db';
 import { product as productSchema } from '@/drizzle/schema';
+import { ProductFeatureSchema } from '@/schemas';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
-import { TypeOf } from 'zod';
+import * as z from 'zod';
 
 const ProuductFormPage = async ({
   params,
@@ -18,13 +19,14 @@ const ProuductFormPage = async ({
   // check if the first param is number (still string but number string)
   const checkIfTheRightParamsWerePassesd =
     /[a-zA-Zآابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی]/.test(params.id[0]);
+
   // if it is throw not found
   if (checkIfTheRightParamsWerePassesd) notFound();
 
   const product = await drizzleDb.query.product.findFirst({
     where: eq(productSchema.id, +params.id[0]),
     with: {
-      productFeatureGroup: {
+      productFeatures: {
         with: {
           productFeaturePairs: true,
         },
@@ -38,9 +40,23 @@ const ProuductFormPage = async ({
     },
   });
 
+  // type l = {
+  //   groupName?: string | undefined;
+  //   pairs: { featureKey: string; featureValue: string }[];
+  // }[];
+
   const productImages = product?.images.map((image) => image.url);
 
-  const productFeatures = product?.productFeatureGroup;
+  const productFeatures: z.infer<typeof ProductFeatureSchema>[] | undefined =
+    product?.productFeatures.map((f) => ({
+      featureId: f.featureId,
+      featureName: f.featureName ?? '',
+      pairs: f.productFeaturePairs.map((p) => ({
+        pairId: p.pairId,
+        pairKey: p.pairKey,
+        pairValue: p.pairValue,
+      })),
+    }));
 
   const relatedCategoriesId = product?.productToCategory.map(({ category }) => {
     return {
