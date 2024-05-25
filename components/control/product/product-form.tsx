@@ -66,7 +66,7 @@ import {
 } from '@/components/ui/command';
 import {
   addCommaAndRetuenPersianStringNumberOnChange,
-  generateRandomUniqueString,
+  generateRandomUniqueStringFromDate,
   toPersianNumber,
 } from '@/lib/persian-string';
 import { Textarea } from '@/components/ui/textarea';
@@ -86,49 +86,6 @@ type ProductFormProps = {
 };
 
 type ProductFormFieldTypes = z.infer<typeof ProductFormSchema>;
-
-// export type FakeFeaturesProps = {
-//   featureId: string;
-//   featureName?: string | undefined;
-//   pairs: {
-//     pairId: string;
-//     pairKey: string;
-//     pairValue: string;
-//   }[];
-// }[];
-
-// const fakeFeatures: FakeFeaturesProps = [
-//   {
-//     featureId: 'sd;fjas;dk',
-//     featureName: 'one',
-//     pairs: [
-//       { pairId: '4920338204e98', pairKey: 'یک', pairValue: 'یک' },
-//       { pairId: '9r9r9r9', pairKey: 'دو', pairValue: 'دو' },
-//     ],
-//   },
-//   {
-//     featureId: 'sdl;kfj,c,c',
-//     featureName: 'two',
-//     pairs: [{ pairId: 'sldkfmcxmcmcmcmc', pairKey: 'سه', pairValue: 'سه' }],
-//   },
-//   {
-//     featureId: 'sidfkdksldkjfas',
-//     featureName: 'three',
-//     pairs: [
-//       { pairId: 'sldkfj;asdfsssss', pairKey: 'چهار', pairValue: 'چهار' },
-//       { pairId: ';mvcdi9irelknvcc', pairKey: 'پنج', pairValue: 'پنج' },
-//       {
-//         pairId: 'mvcl;sdiwencvdfskljdf;s',
-//         pairKey: 'شش',
-//         pairValue: 'شش',
-//       },
-//       { pairId: '9i4393237298734987', pairKey: 'هفت', pairValue: 'هفت' },
-//     ],
-//   },
-// ];
-//
-//
-//
 
 const ProductForm = ({
   product,
@@ -150,11 +107,11 @@ const ProductForm = ({
   >(
     productFeatures ?? [
       {
-        featureId: generateRandomUniqueString(16),
+        featureId: generateRandomUniqueStringFromDate(),
         featureName: '',
         pairs: [
           {
-            pairId: generateRandomUniqueString(16),
+            pairId: generateRandomUniqueStringFromDate(),
             pairKey: '',
             pairValue: '',
           },
@@ -162,23 +119,6 @@ const ProductForm = ({
       },
     ],
   );
-
-  // fake state
-  // const [fakeFeatuerState, setFakeFeatuerState] = useState<FakeFeaturesProps>(
-  //   fakeFeatures ?? [
-  //     {
-  //       featureId: generateRandomUniqueString(16),
-  //       featureName: '',
-  //       pairs: [
-  //         {
-  //           pairId: generateRandomUniqueString(16),
-  //           pairKey: '',
-  //           pairValue: '',
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // );
 
   // const router = useRouter();
 
@@ -646,127 +586,12 @@ const ProductForm = ({
             />
           </div>
 
-          <Separator />
-
-          {/* <div className='space-y-3'>
-            <FormLabel>ویژگی محصول</FormLabel>
-            {productFeaturesState.map((g, index) => (
-              <div
-                key={index}
-                className='flex flex-col gap-3 border-b pb-8 lg:flex-row'
-              >
-                <div className='felx gap-2 lg:w-3/12'>
-                  <Button
-                    disabled={isPending || productFeaturesState.length === 1}
-                    size='icon'
-                    // className='aspect-square'
-                    variant='ghost'
-                    onClick={(e) => {
-                      e.preventDefault();
-                      // todo
-                      // handleRemoveFeatureGroup(group.groupId);
-                    }}
-                  >
-                    <X className='size-4 text-muted-foreground' />
-                  </Button>
-                  <Input
-                    id={g.groupName}
-                    type='text'
-                    disabled={isPending}
-                    value={g.groupName}
-                    placeholder='نام گروه (اختیاری)'
-                    className='rounded-none border-0 border-b-[1px] shadow-none focus-visible:border-b-[1px] focus-visible:border-black focus-visible:ring-0'
-                    // onChange={
-                    // todo
-                    // handleFeatureGroupNameChange(
-                    //   group.groupId,
-                    //   e.target.value,
-                    // )
-                    // }
-                  />
-                </div>
-                <div className='flex w-full flex-col gap-y-2'>
-                  {g.pairs.map((p, index) => (
-                    <div key={index} className='flex gap-x-3'>
-                      <Input
-                        className='w-4/12'
-                        id={p.featureKey}
-                        type='text'
-                        placeholder='نام ویژگی'
-                        value={p.featureKey}
-                        // onChange={
-                        // (e) =>
-                        // handleFeaturePairChange(
-                        //   group.groupId,
-                        //   index,
-                        //   'featureKey',
-                        //   e.target.value
-                        // )
-                        // }
-                      />
-                      <Input
-                        id={p.featureValue}
-                        type='text'
-                        placeholder='شرح ویژگی'
-                        value={p.featureValue}
-                        // onChange={(e) =>
-                        //   handleFeaturePairChange(
-                        //     group.groupId,
-                        //     index,
-                        //     'featureValue',
-                        //     e.target.value
-                        //   )
-                        // }
-                      />
-                      <Button
-                        disabled={isPending || g.pairs.length === 1}
-                        variant='ghost'
-                        size='icon'
-                        // className='aspect-square'
-                        // onClick={(e) => {
-                        //   e.preventDefault();
-                        //   handleRemoveFeaturePair(group.groupId, index);
-                        // }}
-                      >
-                        <Trash className='size-4 text-muted-foreground' />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    variant='outline'
-                    className='mt-3 flex items-center gap-x-2'
-                    onClick={(e) => {
-                      e.preventDefault();
-                      // handleAddFeaturePair(group.groupId);
-                    }}
-                  >
-                    ویژگی جدید
-                    <Plus className='size-4' />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            <Button
-              disabled={isPending}
-              className='mr-auto flex'
-              onClick={(e) => {
-                e.preventDefault();
-                // todo
-                // handleAddFeatureGroup();
-              }}
-            >
-              گروه ویژگی جدید
-            </Button>
-          </div> */}
-
           <ProductFormFeatures
             features={productFeaturesState}
             setFeatures={setProductFeaturesState}
             isPending={isPending}
             startTransition={startTransition}
           />
-
-          <Separator />
 
           <div>
             <FormField

@@ -1,19 +1,19 @@
 'use client';
 
-import { Reorder, motion, useDragControls } from 'framer-motion';
+import {
+  AnimatePresence,
+  Reorder,
+  motion,
+  useDragControls,
+} from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronDown, ChevronUp, Grip, GripHorizontal, X } from 'lucide-react';
-import {
-  Dispatch,
-  SetStateAction,
-  TransitionStartFunction,
-  useEffect,
-  useState,
-} from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import PairItem from './pair-item';
 import * as z from 'zod';
 import { ProductFeaturePairSchema, ProductFeatureSchema } from '@/schemas';
+import { generateRandomUniqueStringFromDate } from '@/lib/persian-string';
 
 type FeatureItemProps = {
   featureIndex: number;
@@ -33,10 +33,10 @@ const FeatureItem = ({
   >(feature.pairs);
 
   useEffect(() => {
-    updatePairByFeatureIndex(featureIndex, pairsState);
+    updateSetFeaturesState(featureIndex, pairsState);
   }, [pairsState]);
 
-  const updatePairByFeatureIndex = (
+  const updateSetFeaturesState = (
     featureIndex: number,
     pairs: typeof pairsState,
   ) => {
@@ -51,70 +51,97 @@ const FeatureItem = ({
     );
   };
 
+  const addNewPair = () => {
+    setPairsState((prev) => [
+      ...prev,
+      {
+        pairId: generateRandomUniqueStringFromDate(),
+        pairKey: '',
+        pairValue: '',
+      },
+    ]);
+  };
+
+  const removeFeatureByIndex = () => {
+    setFeatures((prev) => prev.filter((_, i) => i !== featureIndex));
+  };
+
   return (
     <Reorder.Item
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      // transition={{ opacity: { duration: 0.2 }, height: { duration: 0.4 } }}
       dragControls={dragControls}
       value={feature}
-      className='flex flex-col gap-3 pb-8 lg:flex-row'
     >
-      <div className='flex gap-2 lg:w-3/12'>
-        <Button
-          size='icon'
-          variant='ghost'
-          onClick={(e) => e.preventDefault()}
-          className='hover:cursor-grab active:cursor-grabbing'
-          onPointerDown={(e) => {
-            dragControls.start(e);
-          }}
-        >
-          <Grip className='size-4' />
-        </Button>
-        <Button
-          //   disabled={loading || productFeatureGroupStateObject.length === 1}
-          size='icon'
-          className='aspect-square'
-          variant='ghost'
-          //   onClick={(e) => {
-          //     e.preventDefault();
-          //     // handleRemoveFeatureGroup(group.groupId);
-          //   }}
-        >
-          <X className='size-4 text-muted-foreground' />
-        </Button>
-        <Input
-          id={feature.featureId}
-          type='text'
-          //   disabled={loading}
-          value={feature.featureName}
-          placeholder='نام گروه (اختیاری)'
-          className='rounded-none border-0 border-b-[1px] shadow-none focus-visible:border-b-[1px] focus-visible:border-black focus-visible:ring-0'
-          //   onChange={(e) =>
-          //     // handleFeatureGroupNameChange(group.groupId, e.target.value)
-          //   }
-        />
-        <Button
-          //   disabled={loading || productFeatureGroupStateObject.length === 1}
-          size='icon'
-          variant='ghost'
-          //   onClick={(e) => {
-          //     e.preventDefault();
-          //     // handleRemoveFeatureGroup(group.groupId);
-          //   }}
-        >
-          <ChevronUp className='size-4 text-muted-foreground' />
-        </Button>
+      <div className='grid grid-cols-1 gap-x-3 border-b py-8 lg:grid-cols-12'>
+        <div className='col-span-12 flex gap-3 lg:col-span-3'>
+          <div>
+            <Button
+              size='icon'
+              variant='ghost'
+              onClick={(e) => e.preventDefault()}
+              className='hover:cursor-grab active:cursor-grabbing'
+              onPointerDown={(e) => {
+                dragControls.start(e);
+              }}
+            >
+              <Grip className='size-4 text-muted-foreground' />
+            </Button>
+          </div>
+          <div>
+            <Button
+              disabled={featureIndex === 0}
+              size='icon'
+              variant='ghost'
+              onClick={(e) => {
+                e.preventDefault();
+                removeFeatureByIndex();
+              }}
+            >
+              <X className='size-4 text-muted-foreground' />
+            </Button>
+          </div>
+          <div className='w-full'>
+            <Input
+              id={feature.featureId}
+              type='text'
+              //   disabled={loading}
+              value={feature.featureName}
+              placeholder='نام گروه (اختیاری)'
+              className='rounded-none border-0 border-b-[1px] shadow-none focus-visible:border-b-[1px] focus-visible:border-black focus-visible:ring-0'
+              //   onChange={(e) =>
+              //     // handleFeatureGroupNameChange(group.groupId, e.target.value)
+              //   }
+            />
+          </div>
+        </div>
+        <div className='col-span-12 flex w-full flex-col gap-y-2 lg:col-span-9'>
+          <Reorder.Group axis='y' values={pairsState} onReorder={setPairsState}>
+            <AnimatePresence initial={false}>
+              {pairsState.map((p, i) => (
+                <PairItem
+                  key={p.pairId}
+                  pair={p}
+                  pairIndex={i}
+                  setPairsState={setPairsState}
+                />
+              ))}
+            </AnimatePresence>
+          </Reorder.Group>
+          <Button
+            onClick={(e) => {
+              e.preventDefault();
+              addNewPair();
+            }}
+            variant='ghost'
+            className='col-span-12'
+          >
+            ویژگی جدید
+          </Button>
+        </div>
       </div>
-
-      <Reorder.Group
-        axis='y'
-        values={pairsState}
-        onReorder={setPairsState}
-        className='flex w-full flex-col gap-y-2'
-      >
-        {pairsState.map((p, i) => (
-          <PairItem key={p.pairId} pair={p} />
-        ))}
-      </Reorder.Group>
     </Reorder.Item>
   );
 };
