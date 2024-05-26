@@ -3,7 +3,7 @@
 import { drizzleDb } from '@/drizzle/drizzle-db';
 import { CategoryFormShema } from '@/schemas';
 import * as z from 'zod';
-import { category as categorySchema } from '@/drizzle/schema';
+import { Category as categorySchema } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 
 export const UpdateCategoryAction = async (

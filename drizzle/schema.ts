@@ -9,13 +9,14 @@ import {
   AnyPgColumn,
   uniqueIndex,
   numeric,
+  decimal,
 } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'crypto';
 import { relations } from 'drizzle-orm';
 
 export const userRole = pgEnum('userRole', ['ADMIN', 'USER']);
 
-export const users = pgTable('user', {
+export const Users = pgTable('user', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => randomUUID()),
@@ -28,7 +29,7 @@ export const users = pgTable('user', {
   updatedAt: timestamp('updated_at', { mode: 'string' }).notNull().defaultNow(),
 });
 
-export const category = pgTable(
+export const Category = pgTable(
   'category',
   {
     id: serial('id').primaryKey(),
@@ -45,25 +46,25 @@ export const category = pgTable(
   },
 );
 
-export const categoryRelations = relations(category, ({ one, many }) => ({
-  parentCategory: one(category, {
-    fields: [category.parentId],
-    references: [category.id],
+export const CategoryRelations = relations(Category, ({ one, many }) => ({
+  parentCategory: one(Category, {
+    fields: [Category.parentId],
+    references: [Category.id],
     relationName: 'categoryRelations',
   }),
-  subcategories: many(category, {
+  subcategories: many(Category, {
     relationName: 'categoryRelations',
   }),
-  productToCategory: many(productToCategory),
+  productToCategory: many(ProductToCategory),
 }));
 
-export const product = pgTable('product', {
+export const Product = pgTable('product', {
   id: serial('id').primaryKey(),
   productName: text('product_name').notNull(),
   productAddressName: text('product_address_name').notNull(),
   productDescription: text('product_description'),
-  price: numeric('price').notNull(),
-  specialPrice: numeric('special_price').notNull(),
+  price: integer('price').notNull(),
+  specialPrice: integer('special_price'),
   inventoryNumber: integer('inventory_number').notNull(),
   buyLimit: integer('buy_limit').notNull(),
   thumbnailImage: text('thumbnail_image').notNull(),
@@ -71,44 +72,44 @@ export const product = pgTable('product', {
   updatedAt: timestamp('updated_at', { mode: 'string' }).notNull().defaultNow(),
 });
 
-export const productRelations = relations(product, ({ one, many }) => ({
-  productToCategory: many(productToCategory),
-  images: many(productImages),
-  productFeatures: many(productFeatures),
+export const ProductRelations = relations(Product, ({ one, many }) => ({
+  productToCategory: many(ProductToCategory),
+  images: many(ProductImages),
+  productFeatures: many(ProductFeatures),
 }));
 
-export const productImages = pgTable('product_images', {
+export const ProductImages = pgTable('product_images', {
   id: serial('id').primaryKey(),
   url: text('url').notNull(),
   productId: integer('product_id'),
 });
 
-export const productIamgesRelations = relations(productImages, ({ one }) => ({
-  product: one(product, {
-    fields: [productImages.productId],
-    references: [product.id],
+export const ProductIamgesRelations = relations(ProductImages, ({ one }) => ({
+  product: one(Product, {
+    fields: [ProductImages.productId],
+    references: [Product.id],
   }),
 }));
 
-export const productFeatures = pgTable('product_features', {
+export const ProductFeatures = pgTable('product_features', {
   id: serial('id').primaryKey(),
   featureId: text('feature_id').notNull(),
   featureName: text('feature_name'),
   productId: integer('product_id'),
 });
 
-export const productFeaturesRelations = relations(
-  productFeatures,
+export const ProductFeaturesRelations = relations(
+  ProductFeatures,
   ({ one, many }) => ({
-    product: one(product, {
-      fields: [productFeatures.productId],
-      references: [product.id],
+    product: one(Product, {
+      fields: [ProductFeatures.productId],
+      references: [Product.id],
     }),
-    productFeaturePairs: many(productFeaturePairs),
+    productFeaturePairs: many(ProductFeaturePairs),
   }),
 );
 
-export const productFeaturePairs = pgTable('product_feature_pairs', {
+export const ProductFeaturePairs = pgTable('product_feature_pairs', {
   id: serial('id').primaryKey(),
   pairId: text('pair_id').notNull(),
   pairKey: text('pair_key').notNull(),
@@ -116,41 +117,41 @@ export const productFeaturePairs = pgTable('product_feature_pairs', {
   productFeatureId: integer('product_feature_id'),
 });
 
-export const productFeaturePairsRelations = relations(
-  productFeaturePairs,
+export const ProductFeaturePairsRelations = relations(
+  ProductFeaturePairs,
   ({ one }) => ({
-    productFeatures: one(productFeatures, {
-      fields: [productFeaturePairs.productFeatureId],
-      references: [productFeatures.id],
+    productFeatures: one(ProductFeatures, {
+      fields: [ProductFeaturePairs.productFeatureId],
+      references: [ProductFeatures.id],
     }),
   }),
 );
 
-export const productToCategory = pgTable(
+export const ProductToCategory = pgTable(
   'product_to_category',
   {
     productId: integer('product_id')
       .notNull()
-      .references(() => product.id),
+      .references(() => Product.id),
     categoryId: integer('category_id')
       .notNull()
-      .references(() => category.id),
+      .references(() => Category.id),
   },
   (t) => ({
     pk: primaryKey({ columns: [t.productId, t.categoryId] }),
   }),
 );
 
-export const productToCategoryRelations = relations(
-  productToCategory,
+export const ProductToCategoryRelations = relations(
+  ProductToCategory,
   ({ one }) => ({
-    product: one(product, {
-      fields: [productToCategory.productId],
-      references: [product.id],
+    product: one(Product, {
+      fields: [ProductToCategory.productId],
+      references: [Product.id],
     }),
-    category: one(category, {
-      fields: [productToCategory.categoryId],
-      references: [category.id],
+    category: one(Category, {
+      fields: [ProductToCategory.categoryId],
+      references: [Category.id],
     }),
   }),
 );

@@ -24,16 +24,17 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import {
-  category as categorySchema,
-  productFeatures,
-  productFeaturePairs,
-  product as productSchema,
+  Category as categorySchema,
+  ProductFeatures,
+  ProductFeaturePairs,
+  Product as productSchema,
 } from '@/drizzle/schema';
 import { cn } from '@/lib/utils';
 import {
   FileListSchema,
   ProductFormSchema,
   ProductFeatureSchema,
+  ProductFeaturesArraySchema,
 } from '@/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -67,6 +68,8 @@ import {
 import {
   addCommaAndRetuenPersianStringNumberOnChange,
   generateRandomUniqueStringFromDate,
+  removeComma,
+  toEnglishNumber,
   toPersianNumber,
 } from '@/lib/persian-string';
 import { Textarea } from '@/components/ui/textarea';
@@ -76,6 +79,7 @@ import {
 } from '@/action/upload/s3-bucket-action';
 import toast from 'react-hot-toast';
 import ProductFormFeatures from './product-form-features';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type ProductFormProps = {
   product: typeof productSchema.$inferSelect | undefined;
@@ -85,7 +89,7 @@ type ProductFormProps = {
   allCategories: (typeof categorySchema.$inferSelect)[];
 };
 
-type ProductFormFieldTypes = z.infer<typeof ProductFormSchema>;
+type ProductFormFieldsTypes = z.infer<typeof ProductFormSchema>;
 
 const ProductForm = ({
   product,
@@ -157,7 +161,7 @@ const ProductForm = ({
   const toastMessage = product ? 'محصول بروز شد' : 'محصول ایجاد شد';
   const action = product ? 'ذخیره تغییرات' : 'ایجاد';
 
-  const form = useForm<ProductFormFieldTypes>({
+  const form = useForm<ProductFormFieldsTypes>({
     resolver: zodResolver(ProductFormSchema),
     defaultValues: {
       productName: product?.productName ?? '',
@@ -190,6 +194,8 @@ const ProductForm = ({
       productFeatures: productFeaturesState,
     },
   });
+
+  console.log(relatedCategoriesId);
 
   const handleInputFileOnChange = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -272,9 +278,20 @@ const ProductForm = ({
 
   const onDelete = async () => {};
 
-  const onSubmit = (data: ProductFormFieldTypes) => {
+  const onSubmit = (data: ProductFormFieldsTypes) => {
+    console.log(typeof data.price);
+
+    data.productFeatures = productFeaturesState;
+    const validatedFields = ProductFormSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+      toast.error('error');
+      return;
+    }
+
     startTransition(async () => {
-      await CreateProductAction(data);
+      await CreateProductAction(validatedFields.data);
+      // console.log(validatedFields.data);
     });
   };
 
@@ -385,12 +402,12 @@ const ProductForm = ({
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent align='start' className='w-[300px] p-0'>
+                    <PopoverContent align='start' className='p-0'>
                       <Command>
                         <CommandInput placeholder='جستوجو' className='h-9' />
                         <CommandEmpty>نتیجه یافت نشد.</CommandEmpty>
                         <CommandGroup>
-                          <CommandList>
+                          <CommandList className='px-1 scrollbar-silk-no-bg'>
                             {allCategories.map((category) => (
                               <CommandItem
                                 value={category.categoryName}

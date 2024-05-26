@@ -2,11 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* full height pages */
-html,
-body,
-:root {
-  height: 100%;
+@layer base {
+  html,
+  body,
+  :root {
+    height: 100%;
+  }
 }
 
 @layer base {

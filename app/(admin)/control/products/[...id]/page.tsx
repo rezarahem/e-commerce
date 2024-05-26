@@ -1,7 +1,7 @@
 import ProductForm from '@/components/control/product/product-form';
 import Container from '@/components/ui/container';
 import { drizzleDb } from '@/drizzle/drizzle-db';
-import { product as productSchema } from '@/drizzle/schema';
+import { Product } from '@/drizzle/schema';
 import { ProductFeatureSchema } from '@/schemas';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
@@ -23,8 +23,8 @@ const ProuductFormPage = async ({
   // if it is throw not found
   if (checkIfTheRightParamsWerePassesd) notFound();
 
-  const product = await drizzleDb.query.product.findFirst({
-    where: eq(productSchema.id, +params.id[0]),
+  const product = await drizzleDb.query.Product.findFirst({
+    where: eq(Product.id, +params.id[0]),
     with: {
       productFeatures: {
         with: {
@@ -64,7 +64,9 @@ const ProuductFormPage = async ({
     };
   });
 
-  const allCategories = await drizzleDb.query.category.findMany();
+  console.log(productImages);
+
+  const allCategories = await drizzleDb.query.Category.findMany();
 
   return (
     <Container defualtPY className='space-y-3'>

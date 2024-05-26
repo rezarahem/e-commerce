@@ -62,6 +62,21 @@ const FeatureItem = ({
     ]);
   };
 
+  const updateFeatureNameOnChange = (featureName: string) => {
+    setFeatures((prev) => {
+      return prev.map((f, i) => {
+        if (i !== featureIndex) {
+          return f;
+        }
+
+        return {
+          ...f,
+          featureName,
+        };
+      });
+    });
+  };
+
   const removeFeatureByIndex = () => {
     setFeatures((prev) => prev.filter((_, i) => i !== featureIndex));
   };
@@ -75,8 +90,8 @@ const FeatureItem = ({
       dragControls={dragControls}
       value={feature}
     >
-      <div className='grid grid-cols-1 gap-x-3 border-b py-8 lg:grid-cols-12'>
-        <div className='col-span-12 flex gap-3 lg:col-span-3'>
+      <div className='grid grid-cols-1 gap-x-3 border-b py-6 lg:grid-cols-12'>
+        <div className='col-span-12 flex gap-3 py-3 lg:col-span-3'>
           <div>
             <Button
               size='icon'
@@ -111,9 +126,7 @@ const FeatureItem = ({
               value={feature.featureName}
               placeholder='نام گروه (اختیاری)'
               className='rounded-none border-0 border-b-[1px] shadow-none focus-visible:border-b-[1px] focus-visible:border-black focus-visible:ring-0'
-              //   onChange={(e) =>
-              //     // handleFeatureGroupNameChange(group.groupId, e.target.value)
-              //   }
+              onChange={(e) => updateFeatureNameOnChange(e.target.value)}
             />
           </div>
         </div>

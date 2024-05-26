@@ -2,7 +2,7 @@
 import * as z from 'zod';
 import { CategoryFormShema } from '@/schemas';
 import { drizzleDb } from '@/drizzle/drizzle-db';
-import { category as categorySchema } from '@/drizzle/schema';
+import { Category as categorySchema } from '@/drizzle/schema';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 

@@ -1,7 +1,7 @@
 import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import NextAuth from 'next-auth';
 import authConfig from '@/auth.config';
-import { users, userRole } from '@/drizzle/schema';
+import { Users, userRole } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 import Credentials from 'next-auth/providers/credentials';
 import { drizzleDb } from './drizzle/drizzle-db';
@@ -39,8 +39,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       const [existingUser] = await drizzleDb
         .select()
-        .from(users)
-        .where(eq(users.id, token.sub));
+        .from(Users)
+        .where(eq(Users.id, token.sub));
 
       if (!existingUser) return token;
 

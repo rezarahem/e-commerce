@@ -1,6 +1,6 @@
 'use client';
 
-import { category as schemaCategory } from '@/drizzle/schema';
+import { Category as schemaCategory } from '@/drizzle/schema';
 import { CategoryFormShema } from '@/schemas';
 import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';

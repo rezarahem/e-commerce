@@ -23,6 +23,21 @@ const PairItem = ({ pair, pairIndex, setPairsState }: PairItemProps) => {
     setPairsState((prev) => prev.filter((_, i) => i !== pairIndex));
   };
 
+  const updatePairsOnChange = (key: 'pairKey' | 'pairValue', value: string) => {
+    setPairsState((prev) => {
+      return prev.map((p, i) => {
+        if (i !== pairIndex) {
+          return p;
+        }
+
+        return {
+          ...p,
+          [key]: value,
+        };
+      });
+    });
+  };
+
   return (
     <Reorder.Item
       initial={{ opacity: 0, height: 0 }}
@@ -52,14 +67,14 @@ const PairItem = ({ pair, pairIndex, setPairsState }: PairItemProps) => {
             type='text'
             placeholder='نام ویژگی'
             value={pair.pairKey}
-            // onChange={}
+            onChange={(e) => updatePairsOnChange('pairKey', e.target.value)}
           />
           <Input
             id={pair.pairValue}
             type='text'
             placeholder='شرح ویژگی'
             value={pair.pairValue}
-            // onChange={}
+            onChange={(e) => updatePairsOnChange('pairValue', e.target.value)}
           />
         </div>
         <div>

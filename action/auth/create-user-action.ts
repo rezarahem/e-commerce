@@ -2,7 +2,7 @@
 
 import { drizzleDb } from '@/drizzle/drizzle-db';
 import { Otp } from '../otp';
-import { users } from '@/drizzle/schema';
+import { Users } from '@/drizzle/schema';
 
 export const CreateUserAction = async (
   userName: string,
@@ -28,7 +28,7 @@ export const CreateUserAction = async (
     // });
 
     const [user] = await drizzleDb
-      .insert(users)
+      .insert(Users)
       .values({
         phone: phoneNumber,
         name: userName,

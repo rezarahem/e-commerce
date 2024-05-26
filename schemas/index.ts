@@ -1,3 +1,4 @@
+import { removeComma, toEnglishNumber } from '@/lib/persian-string';
 import * as z from 'zod';
 
 export const LoginSchema = z.object({
@@ -30,20 +31,6 @@ export const CategoryFormShema = z.object({
   currentCategoryId: z.number().optional(),
 });
 
-// export const ProductFeaturesSchema = z
-//   .object({
-//     featureId: z.string(),
-//     featureName: z.string().optional(),
-//     pairs: z
-//       .object({
-//         pairId: z.string(),
-//         pairKey: z.string(),
-//         pairValue: z.string(),
-//       })
-//       .array(),
-//   })
-//   .array();
-
 export const ProductFeaturePairSchema = z.object({
   pairId: z.string(),
   pairKey: z.string(),
@@ -56,74 +43,149 @@ export const ProductFeatureSchema = z.object({
   pairs: z.array(ProductFeaturePairSchema),
 });
 
-export const ProductFormSchema = z.object({
-  productName: z
-    .string({ required_error: 'ثبت عنوان محصول الزامی است.' })
-    .min(3, 'نام کالا حداقل باید ۳ حرف باشد.')
-    .refine((value) => !/[\/\\{}\[\]<>+?؟!!@#$%^&*`'";:,٫~]/gmu.test(value), {
-      message: `حروف غیر مجاز (\\/[]{}<>+?,:;'"\`!@#$%^&*؟!٫)`,
-    }),
-  productAddressName: z
-    .string({ required_error: 'ثبت آدرس محصول الزامی است.' })
-    .toLowerCase()
-    .min(3, 'آدرس محصول حداقل باید ۳ حرف باشد.')
-    .refine(
-      (value) =>
-        !/[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی۰۱۲۳۴۵۶۷۸۹]/gmu.test(value),
-      {
-        message: 'حروف و اعداد فارسی غیر مجاز است.',
-      },
-    ),
-  categories: z.object({ id: z.number() }).array(),
-  price: z
-    .string({ required_error: 'ثبت قیمت الزامی است.' })
-    .min(6, 'حداقل قیمت مجاز ۱۰,۰۰۰ تومان می‌باشد.')
-    .refine(
-      (value) => !/[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهیa-zA-Z]/gmu.test(value),
-      {
-        message: 'حروف غیر مجاز است.',
-      },
-    )
-    .refine((value) => value[0] !== '۰', 'مقدار غیر مجاز است.'),
-  specialPrice: z
-    .string()
-    .optional()
-    .refine(
-      (value) =>
-        !value || !/[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهیa-zA-Z]/gmu.test(value),
-      {
-        message: 'حروف غیر مجاز است.',
-      },
-    )
-    .refine((value) => !value || value[0] !== '۰', 'مقدار غیر مجاز است.'),
-  inventoryNumber: z
-    .string()
-    .min(1, 'لطفا موجودی را وارد کنید.')
-    .refine(
-      (value) => !/[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهیa-zA-Z]/gmu.test(value),
-      {
-        message: 'حروف غیر مجاز است.',
-      },
-    )
-    .refine(
-      (value) => value.length < 2 || value[0] !== '۰',
-      'مقدار غیر مجاز است.',
-    ),
-  buyLimit: z
-    .string({ required_error: 'ثبت محدودیت الزامی است.' })
-    .min(1, 'ثبت محدودیت الزامی است.')
-    .refine(
-      (value) => !/[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهیa-zA-Z]/gmu.test(value),
-      {
-        message: 'حروف غیر مجاز است.',
-      },
-    )
-    .refine((value) => value[0] !== '۰', 'مقدار غیر مجاز است.'),
-  productDescription: z.string().optional(),
-  thumbnailImage: z.string(),
-  images: z.string().array(),
-  productFeatures: z.array(ProductFeatureSchema),
+export const ProductFeaturesArraySchema = z.array(ProductFeatureSchema, {
+  message: 'Invalid Inputs',
 });
+
+export const ProductFormSchema = z
+  .object({
+    productName: z
+      .string()
+      .min(1, 'ثبت عنوان محصول الزامی است.')
+      .min(3, 'نام کالا حداقل باید ۳ حرف باشد.')
+      .refine((value) => !/[\/\\{}\[\]<>+?؟!!@#$%^&*`'";:,٫~]/gmu.test(value), {
+        message: `حروف غیر مجاز (\\/[]{}<>+?,:;'"\`!@#$%^&*؟!٫)`,
+      }),
+    productAddressName: z
+      .string()
+      .min(1, 'ثبت آدرس محصول الزامی است.')
+      .min(3, 'آدرس محصول حداقل باید ۳ حرف باشد.')
+      .toLowerCase()
+      .refine(
+        (value) =>
+          !/[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی۰۱۲۳۴۵۶۷۸۹]/gmu.test(value),
+        {
+          message: 'حروف و اعداد فارسی غیر مجاز است.',
+        },
+      )
+      .transform((value) => value.split(' ').join('-')),
+    categories: z
+      .object({ id: z.number() })
+      .array()
+      .min(1, 'هر محصول باید حداقل داری یک دستبه‌بندی باشد.'),
+    price: z
+      .string({ required_error: 'ثبت قیمت الزامی است.' })
+      .min(6, 'حداقل قیمت مجاز ۱۰,۰۰۰ تومان می‌باشد.')
+      .refine(
+        (value) => !/[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهیa-zA-Z]/gmu.test(value),
+        {
+          message: 'حروف غیر مجاز است.',
+        },
+      )
+      .refine((value) => value[0] !== '۰', 'مقدار غیر مجاز است.')
+      .transform((value) => toEnglishNumber(removeComma(value))),
+    specialPrice: z
+      .string()
+      .optional()
+      .refine(
+        (value) =>
+          !value || !/[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهیa-zA-Z]/gmu.test(value),
+        {
+          message: 'حروف غیر مجاز است.',
+        },
+      )
+      .refine((value) => !value || value[0] !== '۰', 'مقدار غیر مجاز است.')
+      .transform((value) =>
+        value ? toEnglishNumber(removeComma(value)) : value,
+      ),
+    inventoryNumber: z
+      .string()
+      .min(1, 'لطفا موجودی را وارد کنید.')
+      .refine(
+        (value) => !/[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهیa-zA-Z]/gmu.test(value),
+        {
+          message: 'حروف غیر مجاز است.',
+        },
+      )
+      .refine(
+        (value) => value.length < 2 || value[0] !== '۰',
+        'مقدار غیر مجاز است.',
+      )
+      .transform((value) =>
+        value ? toEnglishNumber(removeComma(value)) : value,
+      ),
+    buyLimit: z
+      .string({ required_error: 'ثبت محدودیت الزامی است.' })
+      .min(1, 'ثبت محدودیت الزامی است.')
+      .refine(
+        (value) => !/[آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهیa-zA-Z]/gmu.test(value),
+        {
+          message: 'حروف غیر مجاز است.',
+        },
+      )
+      .refine((value) => value[0] !== '۰', 'مقدار غیر مجاز است.')
+      .transform((value) =>
+        value ? toEnglishNumber(removeComma(value)) : value,
+      ),
+    productDescription: z.string().optional(),
+    thumbnailImage: z.string(),
+    images: z.string().array().min(1, 'آپلود حداقل یک تصویر الزامی است.'),
+    productFeatures: ProductFeaturesArraySchema,
+  })
+  .superRefine(
+    (
+      { price, specialPrice, thumbnailImage, productFeatures },
+      { addIssue, path },
+    ) => {
+      if (specialPrice !== undefined) {
+        if (+specialPrice > +price) {
+          addIssue({
+            code: 'custom',
+            message: 'قیمت ویژه نباید بزرگتر از قیمت اصلی باشد.',
+            path: ['specialPrice'],
+            fatal: true,
+          });
+
+          return z.NEVER;
+        } else if (+specialPrice === +price) {
+          addIssue({
+            code: 'custom',
+            message: 'قیمت ویژه نباید برابر قیمت اصلی باشد.',
+            path: ['specialPrice'],
+            fatal: true,
+          });
+
+          return z.NEVER;
+        }
+      }
+
+      if (!thumbnailImage) {
+        addIssue({
+          code: 'custom',
+          message: 'انتخاب تصویر کاور الزامی است.',
+          path: ['images'],
+          fatal: true,
+        });
+
+        return z.NEVER;
+      }
+    },
+  )
+  .transform((data) => {
+    data.productFeatures = data.productFeatures
+      .filter((feature) =>
+        feature.pairs.some(
+          (pair) => pair.pairKey !== '' && pair.pairValue !== '',
+        ),
+      )
+      .map((feature) => ({
+        ...feature,
+        pairs: feature.pairs.filter(
+          (pair) => pair.pairKey !== '' && pair.pairValue !== '',
+        ),
+      }));
+    return data;
+  });
 
 export const FileSchema = z
   .instanceof(File)
@@ -138,3 +200,7 @@ export const FileSchema = z
   );
 
 export const FileListSchema = z.array(FileSchema);
+
+export const testSchema = z.object({
+  price: z.string().transform((value) => +value),
+});

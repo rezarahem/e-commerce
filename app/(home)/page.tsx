@@ -1,5 +1,5 @@
 import { drizzleDb } from '@/drizzle/drizzle-db';
-import { category, productToCategory } from '@/drizzle/schema';
+import { Category, ProductToCategory } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 
 const HomePage = async () => {

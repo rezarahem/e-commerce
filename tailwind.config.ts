@@ -78,7 +78,27 @@ const config = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    //@ts-ignore
+    ({ addUtilities }) => {
+      addUtilities({
+        '.scrollbar-silk-no-bg::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '.scrollbar-silk-no-bg::-webkit-scrollbar-track': {
+          background: 'hsla(360, 100%, 100%, 1)',
+        },
+        '.scrollbar-silk-no-bg::-webkit-scrollbar-thumb': {
+          background: 'hsla(0, 0%, 77%, 1)',
+          'border-radius': '100vw',
+        },
+        '.scrollbar-silk-no-bg::-webkit-scrollbar-thumb:hover': {
+          background: 'hsla(0, 0%, 68%, 1)',
+        },
+      });
+    },
+  ],
 } satisfies Config;
 
 export default config;

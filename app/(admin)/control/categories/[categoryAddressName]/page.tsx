@@ -1,7 +1,7 @@
 import CategoryForm from '@/components/control/category/category-form';
 import Container from '@/components/ui/container';
 import { drizzleDb } from '@/drizzle/drizzle-db';
-import { category as schemaCategory } from '@/drizzle/schema';
+import { Category as schemaCategory } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 
 const CategoryFormPage = async ({
