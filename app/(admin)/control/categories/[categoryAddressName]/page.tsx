@@ -11,11 +11,11 @@ const CategoryFormPage = async ({
     categoryAddressName: string;
   };
 }) => {
-  const category = await drizzleDb.query.category.findFirst({
+  const category = await drizzleDb.query.Category.findFirst({
     where: eq(schemaCategory.categoryAddressName, params.categoryAddressName),
   });
 
-  const allCategories = await drizzleDb.query.category.findMany();
+  const allCategories = await drizzleDb.query.Category.findMany();
   return (
     <Container defualtPY className='space-y-3'>
       <CategoryForm category={category} allCategories={allCategories} />

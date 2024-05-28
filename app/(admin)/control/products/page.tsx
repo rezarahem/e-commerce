@@ -8,7 +8,7 @@ import { PlusIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 const ProductsPage = async () => {
-  const allProducts = await drizzleDb.query.product.findMany();
+  const allProducts = await drizzleDb.query.Product.findMany();
 
   return (
     <Container defualtPY className='space-y-3'>

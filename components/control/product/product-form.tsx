@@ -1,9 +1,9 @@
 'use client';
 
 import { Reorder, useDragControls, useMotionValue } from 'framer-motion';
-import { CreateProductAction } from '@/action/control/proudct/create-product-action';
 import AlertModal from '@/components/ui/alert-modal';
 import { Button } from '@/components/ui/button';
+import { CreateProductAction } from '@/action/control/proudct/create-product-action';
 import Image from 'next/image';
 import {
   Form,
@@ -88,6 +88,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Transaction } from '@/action/control/proudct/trans-action';
 
 type ProductFormProps = {
   product: typeof productSchema.$inferSelect | undefined;
@@ -176,14 +177,6 @@ const ProductForm = ({
     if (imageFiles.length === 0) return;
 
     onUpload();
-    // const validatedFiles = FileArraySchema.safeParse(imageFiles);
-    // if (!validatedFiles.success) {
-    //   const errorArray = validatedFiles.error.errors;
-    //   form.setError('images', {
-    //     message: errorArray[errorArray.length - 1].message,
-    //   });
-    // } else {
-    // }
   }, [imageFiles]);
 
   useEffect(() => {
@@ -318,37 +311,35 @@ const ProductForm = ({
   const onDelete = async () => {};
 
   const onSubmit = (data: ProductFormFieldsTypes) => {
-    console.log(form.getFieldState('categories').invalid);
+    try {
+      startTransition(async () => {
+        const validatedFields = ProductFormSchema.safeParse(data);
 
-    // try {
-    //   startTransition(async () => {
-    //     const validatedFields = ProductFormSchema.safeParse(data);
+        if (!validatedFields.success) {
+          toast.error('error');
+          return;
+        }
 
-    //     if (!validatedFields.success) {
-    //       toast.error('error');
-    //       return;
-    //     }
+        // const res = await axios.post('/api/cp', validatedFields.data);
+        const result = await CreateProductAction(validatedFields.data);
 
-    //     // const res = await axios.post('/api/cp', validatedFields.data);
-    //     const result = await CreateProductAction(validatedFields.data);
+        if (!result) {
+          toast.error('خطایی رخ داد');
+          return;
+        }
 
-    //     if (!result) {
-    //       toast.error('خطایی رخ داد');
-    //       return;
-    //     }
+        if (!result.success) {
+          toast.error('خطایی رخ داد، لطفا چند دقیقه دیگر تلاش کنید.');
+          return;
+        }
 
-    //     if (!result.success) {
-    //       toast.error('خطایی رخ داد، لطفا چند دقیقه دیگر تلاش کنید.');
-    //       return;
-    //     }
-
-    //     if (result.success && !result.errorMessage) {
-    //       toast.success('محصول ایجاد شد');
-    //     }
-    //   });
-    // } catch (error) {
-    //   toast.error('خطایی رخ داد');
-    // }
+        if (result.success && !result.errorMessage) {
+          toast.success('محصول ایجاد شد');
+        }
+      });
+    } catch (error) {
+      toast.error('خطایی رخ داد');
+    }
   };
 
   return (

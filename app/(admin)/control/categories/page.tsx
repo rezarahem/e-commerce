@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 const CategoriesPage = async () => {
   // get all categories
-  const allCats = await drizzleDb.query.category.findMany();
+  const allCats = await drizzleDb.query.Category.findMany();
 
   return (
     <Container defualtPY className='space-y-3'>
