@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ProductFeaturePairSchema } from '@/schemas';
+import { ProductFeaturePairSchema } from '@/zod';
 import { Reorder, useDragControls } from 'framer-motion';
 import { Grip, Trash } from 'lucide-react';
 import * as z from 'zod';

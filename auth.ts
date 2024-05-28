@@ -5,7 +5,7 @@ import { Users, userRole } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 import Credentials from 'next-auth/providers/credentials';
 import { drizzleDb } from './drizzle/drizzle-db';
-import { LoginSchema } from './schemas';
+import { LoginSchema } from './zod';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(drizzleDb),

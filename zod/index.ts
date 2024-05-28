@@ -70,9 +70,10 @@ export const ProductFormSchema = z
       )
       .transform((value) => value.split(' ').join('-')),
     categories: z
-      .object({ id: z.number() })
+      .number()
       .array()
       .min(1, 'هر محصول باید حداقل داری یک دستبه‌بندی باشد.'),
+    // .nonempty('هر محصول باید حداقل داری یک دستبه‌بندی باشد.'),
     price: z
       .string({ required_error: 'ثبت قیمت الزامی است.' })
       .min(6, 'حداقل قیمت مجاز ۱۰,۰۰۰ تومان می‌باشد.')
@@ -134,9 +135,20 @@ export const ProductFormSchema = z
   })
   .superRefine(
     (
-      { price, specialPrice, thumbnailImage, productFeatures },
+      { price, specialPrice, thumbnailImage, categories },
       { addIssue, path },
     ) => {
+      // if (categories.length === 0) {
+      //   addIssue({
+      //     code: 'custom',
+      //     message: 'هر محصول باید حداقل داری یک دستبه‌بندی باشد.',
+      //     path: ['categories'],
+      //     fatal: true,
+      //   });
+
+      //   return z.NEVER;
+      // }
+
       if (specialPrice !== undefined) {
         if (+specialPrice > +price) {
           addIssue({
@@ -199,7 +211,12 @@ export const FileSchema = z
     },
   );
 
-export const FileListSchema = z.array(FileSchema);
+export const FileArraySchema = z.array(FileSchema);
+// .transform((files) =>
+//   files.filter(
+//     (file) => !['image/jpeg', 'image/jpg', 'image/png'].includes(file.type),
+//   ),
+// );
 
 export const testSchema = z.object({
   price: z.string().transform((value) => +value),

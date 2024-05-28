@@ -2,7 +2,7 @@ import ProductForm from '@/components/control/product/product-form';
 import Container from '@/components/ui/container';
 import { drizzleDb } from '@/drizzle/drizzle-db';
 import { Product } from '@/drizzle/schema';
-import { ProductFeatureSchema } from '@/schemas';
+import { ProductFeatureSchema } from '@/zod';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import * as z from 'zod';
@@ -63,8 +63,6 @@ const ProuductFormPage = async ({
       id: category.id,
     };
   });
-
-  console.log(productImages);
 
   const allCategories = await drizzleDb.query.Category.findMany();
 

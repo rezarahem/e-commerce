@@ -12,7 +12,7 @@ import { ChevronDown, ChevronUp, Grip, GripHorizontal, X } from 'lucide-react';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import PairItem from './pair-item';
 import * as z from 'zod';
-import { ProductFeaturePairSchema, ProductFeatureSchema } from '@/schemas';
+import { ProductFeaturePairSchema, ProductFeatureSchema } from '@/zod';
 import { generateRandomUniqueStringFromDate } from '@/lib/persian-string';
 
 type FeatureItemProps = {

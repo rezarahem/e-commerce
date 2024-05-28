@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { FileListSchema } from '@/schemas';
+import { FileArraySchema } from '@/zod';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 const s3 = new S3Client({
@@ -21,7 +21,7 @@ export const POST = async (req: NextRequest) => {
     }
   }
 
-  const validatedFiles = FileListSchema.safeParse(filesArray);
+  const validatedFiles = FileArraySchema.safeParse(filesArray);
   if (!validatedFiles.success) {
     console.log('not good-server');
     return;

@@ -1,7 +1,7 @@
 'use server';
 
 import * as z from 'zod';
-import { CategoryFormShema } from '@/schemas';
+import { CategoryFormShema } from '@/zod';
 import { drizzleDb } from '@/drizzle/drizzle-db';
 import { Category as categorySchema } from '@/drizzle/schema';
 import { revalidatePath } from 'next/cache';

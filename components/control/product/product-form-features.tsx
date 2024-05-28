@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import FeatureItem from './feature-item';
 import * as z from 'zod';
-import { ProductFeatureSchema } from '@/schemas';
+import { ProductFeatureSchema } from '@/zod';
 import { Separator } from '@/components/ui/separator';
 import { generateRandomUniqueStringFromDate } from '@/lib/persian-string';
 

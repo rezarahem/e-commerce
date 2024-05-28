@@ -1,7 +1,7 @@
 'use client';
 
 import { Category as schemaCategory } from '@/drizzle/schema';
-import { CategoryFormShema } from '@/schemas';
+import { CategoryFormShema } from '@/zod';
 import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';

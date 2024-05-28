@@ -1,6 +1,6 @@
 'use server';
 
-import { FileListSchema } from '@/schemas';
+import { FileArraySchema } from '@/zod';
 import {
   S3Client,
   PutObjectCommand,
@@ -36,7 +36,7 @@ export const S3UploadAction = async (
       }
     }
 
-    const validatedFiles = FileListSchema.safeParse(filesArray);
+    const validatedFiles = FileArraySchema.safeParse(filesArray);
     if (!validatedFiles.success) {
       return {
         success: false,

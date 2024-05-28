@@ -31,14 +31,15 @@ import {
 } from '@/drizzle/schema';
 import { cn } from '@/lib/utils';
 import {
-  FileListSchema,
+  FileArraySchema,
   ProductFormSchema,
   ProductFeatureSchema,
   ProductFeaturesArraySchema,
-} from '@/schemas';
+} from '@/zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   CheckIcon,
+  CircleHelp,
   FlagTriangleRight,
   GripHorizontal,
   ImagePlus,
@@ -51,6 +52,7 @@ import {
   ChangeEvent,
   useCallback,
   useEffect,
+  useRef,
   useState,
   useTransition,
 } from 'react';
@@ -79,7 +81,13 @@ import {
 } from '@/action/upload/s3-bucket-action';
 import toast from 'react-hot-toast';
 import ProductFormFeatures from './product-form-features';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import axios from 'axios';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type ProductFormProps = {
   product: typeof productSchema.$inferSelect | undefined;
@@ -126,13 +134,37 @@ const ProductForm = ({
 
   // const router = useRouter();
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length) {
-      setImageFiles((prevFiles) => [
-        ...prevFiles,
-        ...acceptedFiles.map((file) => Object.assign(file)),
-      ]);
+  // const validatedFiles = FileListSchema.safeParse(imageFiles);
+  // if (!validatedFiles.success) {
+  //   const errorArray = validatedFiles.error.errors;
+  //   form.setError('images', {
+  //     message: errorArray[errorArray.length - 1].message,
+  //   });
+
+  const validateImages = (files: File[]) => {
+    const validatedFields = FileArraySchema.safeParse(files);
+
+    if (!validatedFields.success) {
+      const errorArray = validatedFields.error.errors;
+      form.setError('images', {
+        message: errorArray[errorArray.length - 1].message,
+      });
+      return { success: false };
     }
+
+    form.clearErrors('images');
+    return { success: true };
+  };
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+
+    if (!validateImages(acceptedFiles).success) return;
+
+    setImageFiles((prevFiles) => [
+      ...prevFiles,
+      ...acceptedFiles.map((file) => Object.assign(file)),
+    ]);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive, isFocused } = useDropzone({
@@ -143,16 +175,22 @@ const ProductForm = ({
   useEffect(() => {
     if (imageFiles.length === 0) return;
 
-    const validatedFiles = FileListSchema.safeParse(imageFiles);
-    if (!validatedFiles.success) {
-      const errorArray = validatedFiles.error.errors;
-      form.setError('images', {
-        message: errorArray[errorArray.length - 1].message,
-      });
-    } else {
-      onUpload();
-    }
+    onUpload();
+    // const validatedFiles = FileArraySchema.safeParse(imageFiles);
+    // if (!validatedFiles.success) {
+    //   const errorArray = validatedFiles.error.errors;
+    //   form.setError('images', {
+    //     message: errorArray[errorArray.length - 1].message,
+    //   });
+    // } else {
+    // }
   }, [imageFiles]);
+
+  useEffect(() => {
+    if (productFeaturesState.length === 0) return;
+
+    form.setValue('productFeatures', productFeaturesState);
+  }, [productFeaturesState]);
 
   const title = product ? 'ویرایش محصول' : 'ایجاد محصول';
   const description = product
@@ -167,7 +205,7 @@ const ProductForm = ({
       productName: product?.productName ?? '',
       productAddressName:
         product?.productAddressName.split('-').join(' ') ?? '',
-      categories: relatedCategoriesId ?? [],
+      categories: relatedCategoriesId?.map(({ id }) => id) ?? [],
       price: product
         ? toPersianNumber(
             `${String(product?.price).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`,
@@ -195,17 +233,18 @@ const ProductForm = ({
     },
   });
 
-  console.log(relatedCategoriesId);
+  useEffect(() => {
+    form.clearErrors('categories');
+  }, [form.getValues('categories')]);
 
   const handleInputFileOnChange = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    const files = e.target.files;
-    if (!files) {
-      console.log('null');
-      return;
-    }
-    const filesArray = Array.from(files);
+    if (!e.target.files) return;
+
+    const filesArray = Array.from(e.target.files);
+
+    if (!validateImages(filesArray).success) return;
 
     setImageFiles((prevFiles) => [...prevFiles, ...filesArray]);
   };
@@ -279,20 +318,37 @@ const ProductForm = ({
   const onDelete = async () => {};
 
   const onSubmit = (data: ProductFormFieldsTypes) => {
-    console.log(typeof data.price);
+    console.log(form.getFieldState('categories').invalid);
 
-    data.productFeatures = productFeaturesState;
-    const validatedFields = ProductFormSchema.safeParse(data);
+    // try {
+    //   startTransition(async () => {
+    //     const validatedFields = ProductFormSchema.safeParse(data);
 
-    if (!validatedFields.success) {
-      toast.error('error');
-      return;
-    }
+    //     if (!validatedFields.success) {
+    //       toast.error('error');
+    //       return;
+    //     }
 
-    startTransition(async () => {
-      await CreateProductAction(validatedFields.data);
-      // console.log(validatedFields.data);
-    });
+    //     // const res = await axios.post('/api/cp', validatedFields.data);
+    //     const result = await CreateProductAction(validatedFields.data);
+
+    //     if (!result) {
+    //       toast.error('خطایی رخ داد');
+    //       return;
+    //     }
+
+    //     if (!result.success) {
+    //       toast.error('خطایی رخ داد، لطفا چند دقیقه دیگر تلاش کنید.');
+    //       return;
+    //     }
+
+    //     if (result.success && !result.errorMessage) {
+    //       toast.success('محصول ایجاد شد');
+    //     }
+    //   });
+    // } catch (error) {
+    //   toast.error('خطایی رخ داد');
+    // }
   };
 
   return (
@@ -356,109 +412,128 @@ const ProductForm = ({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name='categories'
-              render={({ field }) => (
-                <FormItem className='flex flex-col justify-start'>
-                  <FormLabel className='mb-[6px] mt-1'>دسته‌بندی‌ها</FormLabel>
-                  <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          disabled={isPending}
-                          variant='outline'
-                          role='combobox'
-                          className={cn('grid grid-cols-12 gap-x-2', {
-                            'font-normal text-muted-foreground':
-                              field.value.length < 1,
-                          })}
-                        >
-                          <div className='col-span-11 w-full overflow-hidden text-right'>
-                            {field.value.length > 0 ? (
-                              <div>
-                                {allCategories
-                                  .filter((category) => {
-                                    return field.value.some(({ id }) => {
-                                      return id === category.id;
-                                    });
-                                  })
-                                  .map((filteredCategory) => (
-                                    <span
-                                      key={filteredCategory.id}
-                                      className='ml-1 inline-block rounded-full bg-gray-300 px-3'
-                                    >
-                                      {filteredCategory.categoryName}
-                                    </span>
-                                  ))}
-                              </div>
-                            ) : (
-                              'انتخاب کنید'
-                            )}
-                          </div>
-                          <div className='col-span-1 mr-auto'>
-                            <CaretSortIcon className='-ml-1 size-4 shrink-0 opacity-90' />
-                          </div>
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent align='start' className='p-0'>
-                      <Command>
-                        <CommandInput placeholder='جستوجو' className='h-9' />
-                        <CommandEmpty>نتیجه یافت نشد.</CommandEmpty>
-                        <CommandGroup>
-                          <CommandList className='px-1 scrollbar-silk-no-bg'>
-                            {allCategories.map((category) => (
-                              <CommandItem
-                                value={category.categoryName}
-                                key={category.id}
-                                onSelect={() => {
-                                  if (
-                                    form
-                                      .getValues('categories')
-                                      .filter(({ id }) => id === category.id)
-                                      .length === 0
-                                  ) {
-                                    form.setValue('categories', [
-                                      ...form.getValues('categories'),
-                                      { id: category.id },
-                                    ]);
-                                  } else {
-                                    form.setValue('categories', [
-                                      ...form
+            <div>
+              <FormField
+                control={form.control}
+                name='categories'
+                render={({ field }) => (
+                  <FormItem className='flex flex-col justify-start'>
+                    <div className='flex gap-x-2'>
+                      <FormLabel className='mb-[6px] mt-1'>
+                        دسته‌بندی‌ها
+                      </FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger className='mb-1'>
+                            <CircleHelp className='size-4 text-muted-foreground' />
+                          </TooltipTrigger>
+                          <TooltipContent className='w-[200px] text-balance text-justify '>
+                            از اینجا دسته‌بندی‌های مرتبط را انتخاب کنید. هیچ
+                            محدودیتی وجود ندارد، با این حال اضافه کردن بیش از ۳
+                            دسته‌بندی پیشنهاد نمی‌گردد.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                      <PopoverTrigger asChild>
+                        <FormControl {...field}>
+                          <Button
+                            disabled={isPending}
+                            variant='outline'
+                            role='combobox'
+                            className={cn('grid grid-cols-12 gap-x-2', {
+                              'font-normal text-muted-foreground':
+                                field.value.length < 1,
+                            })}
+                          >
+                            <div className='col-span-11 w-full overflow-hidden text-right'>
+                              {field.value.length > 0 ? (
+                                <div>
+                                  {allCategories
+                                    .filter((category) => {
+                                      return field.value.some((id) => {
+                                        return id === category.id;
+                                      });
+                                    })
+                                    .map((filteredCategory) => (
+                                      <span
+                                        key={filteredCategory.id}
+                                        className='ml-1 inline-block rounded-full bg-gray-300 px-3'
+                                      >
+                                        {filteredCategory.categoryName}
+                                      </span>
+                                    ))}
+                                </div>
+                              ) : (
+                                'انتخاب کنید'
+                              )}
+                            </div>
+                            <div className='col-span-1 mr-auto'>
+                              <CaretSortIcon className='-ml-1 size-4 shrink-0 opacity-90' />
+                            </div>
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent align='start' className='p-0'>
+                        <Command>
+                          <CommandInput placeholder='جستوجو' className='h-9' />
+                          <CommandEmpty>نتیجه یافت نشد.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandList className='px-1 scrollbar-silk-no-bg'>
+                              {allCategories.map((category) => (
+                                <CommandItem
+                                  value={category.categoryName}
+                                  key={category.id}
+                                  onSelect={() => {
+                                    if (
+                                      form
                                         .getValues('categories')
-                                        .filter(({ id }) => id !== category.id),
-                                    ]);
-                                  }
-                                }}
-                              >
-                                {category.categoryName}
-                                <CheckIcon
-                                  className={cn(
-                                    'mr-auto h-4 w-4',
-                                    form
-                                      .getValues('categories')
-                                      .some(({ id }) => id === category.id)
-                                      ? ''
-                                      : 'hidden',
-                                  )}
-                                />
-                              </CommandItem>
-                            ))}
-                          </CommandList>
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>
-                    از اینجا دسته‌بندی‌های مرتبط را انتخاب کنید. هیچ محدودیتی
-                    وجود ندارد، با این حال اضافه کردن بیش از ۳ دسته‌بندی پیشنهاد
-                    نمی‌گردد.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                                        .filter((id) => id === category.id)
+                                        .length === 0
+                                    ) {
+                                      form.setValue('categories', [
+                                        ...form.getValues('categories'),
+                                        category.id,
+                                        // { id: category.id },
+                                      ]);
+                                    } else {
+                                      form.setValue('categories', [
+                                        ...form
+                                          .getValues('categories')
+                                          .filter((id) => id !== category.id),
+                                      ]);
+                                    }
+                                  }}
+                                >
+                                  {category.categoryName}
+                                  <CheckIcon
+                                    className={cn(
+                                      'mr-auto h-4 w-4',
+                                      form
+                                        .getValues('categories')
+                                        .some((id) => id === category.id)
+                                        ? ''
+                                        : 'hidden',
+                                    )}
+                                  />
+                                </CommandItem>
+                              ))}
+                            </CommandList>
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    {/* <FormDescription>
+                      از اینجا دسته‌بندی‌های مرتبط را انتخاب کنید. هیچ محدودیتی
+                      وجود ندارد، با این حال اضافه کردن بیش از ۳ دسته‌بندی
+                      پیشنهاد نمی‌گردد.
+                    </FormDescription> */}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
 
           <div className='grid grid-cols-1 gap-8 lg:grid-cols-4'>
