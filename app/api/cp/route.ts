@@ -1,21 +1,24 @@
-// import { ProductFormSchema } from '@/schemas';
-// import { NextRequest, NextResponse } from 'next/server';
+import { ProductFormSchema } from '@/zod';
+import { NextRequest, NextResponse } from 'next/server';
 
-// export const POST = async (req: NextRequest) => {
-//   const data = await req.json();
+export const POST = async (
+  req: NextRequest,
+): Promise<
+  NextResponse<{
+    success: boolean;
+    errorMessage: string;
+  }>
+> => {
+  const data = await req.json();
 
-//   const validatedFields = ProductFormSchema.safeParse(data);
+  const validatedFields = ProductFormSchema.safeParse(data);
 
-//   if (!validatedFields.success) {
-//     return NextResponse.json({
-//       success: false,
-//       errorMessage: 'Invalid fields',
-//     });
-//   }
+  if (!validatedFields.success) {
+    return NextResponse.json({
+      success: false,
+      errorMessage: 'Invalid fields',
+    });
+  }
 
-//   if (!data) {
-//     return NextResponse.json({ success: false });
-//   }
-
-//   return NextResponse.json({ success: true });
-// };
+  return NextResponse.json({ success: true, errorMessage: '' });
+};
