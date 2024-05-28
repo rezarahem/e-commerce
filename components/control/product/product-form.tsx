@@ -47,7 +47,7 @@ import {
   Trash,
   X,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import {
   ChangeEvent,
   useCallback,
@@ -88,7 +88,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Transaction } from '@/action/control/proudct/trans-action';
 
 type ProductFormProps = {
   product: typeof productSchema.$inferSelect | undefined;
@@ -320,7 +319,6 @@ const ProductForm = ({
           return;
         }
 
-        // const res = await axios.post('/api/cp', validatedFields.data);
         const result = await CreateProductAction(validatedFields.data);
 
         if (!result) {
@@ -333,8 +331,9 @@ const ProductForm = ({
           return;
         }
 
-        if (result.success && !result.errorMessage) {
+        if (result.success && result.productId && !result.errorMessage) {
           toast.success('محصول ایجاد شد');
+          redirect(`/control/products/${result.productId}`);
         }
       });
     } catch (error) {

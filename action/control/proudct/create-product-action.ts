@@ -22,7 +22,8 @@ export const CreateProductAction = async (
   data: z.infer<typeof ProductFormSchema>,
 ): Promise<{
   success: boolean;
-  errorMessage: string;
+  productId?: number;
+  errorMessage?: string;
 }> => {
   const validatedFields = ProductFormSchema.safeParse(data);
   if (!validatedFields.success) {
@@ -42,7 +43,7 @@ export const CreateProductAction = async (
     productDescription: validatedFields.data.productDescription,
   } satisfies ProductTypeForDbInsert;
   try {
-    await drizzleDb.transaction(async (tx) => {
+    const { productId } = await drizzleDb.transaction(async (tx) => {
       const [product] = await tx
         .insert(Product)
         .values({
@@ -132,10 +133,15 @@ export const CreateProductAction = async (
           }
         }
       }
+
+      return {
+        productId: product.id,
+      };
     });
+
     return {
       success: true,
-      errorMessage: '',
+      productId,
     };
   } catch (error) {
     console.log('[CreateProductAction]', error);
