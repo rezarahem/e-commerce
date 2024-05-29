@@ -1,13 +1,5 @@
 {
   "version": "6",
   "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "6",
-      "when": 1716993284265,
-      "tag": "0000_moaning_firedrake",
-      "breakpoints": true
-    }
-  ]
+  "entries": []
 }
