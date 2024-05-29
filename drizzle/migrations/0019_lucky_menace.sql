@@ -1,1 +1,0 @@
-ALTER TABLE "product" ADD COLUMN "thumbnail_image" text NOT NULL;

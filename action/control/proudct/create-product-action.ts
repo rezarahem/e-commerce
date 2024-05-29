@@ -31,8 +31,6 @@ export const CreateProductAction = async (
     return { success: false, errorMessage: 'Invalid fields' };
   }
 
-  const imgaes = validatedFields.data.images;
-
   const productData = {
     productName: validatedFields.data.productName,
     productAddressName: validatedFields.data.productAddressName,
@@ -45,6 +43,7 @@ export const CreateProductAction = async (
     thumbnailImage: validatedFields.data.thumbnailImage,
     productDescription: validatedFields.data.productDescription,
   } satisfies ProductTypeForDbInsert;
+
   try {
     const { productId } = await drizzleDb.transaction(async (tx) => {
       const [product] = await tx
@@ -52,7 +51,7 @@ export const CreateProductAction = async (
         .values({
           ...productData,
         })
-        .returning();
+        .returning({ productId: Product.id });
 
       // if (!product) {
       //   return {
@@ -67,9 +66,8 @@ export const CreateProductAction = async (
           ...validatedFields.data.categories.map(
             (id) =>
               ({
-                //@ts-ignore
                 categoryId: id,
-                productId: product.id,
+                productId: product.productId,
               }) satisfies ProductToCategoryTypeForDbInsert,
           ),
         ])
@@ -85,7 +83,7 @@ export const CreateProductAction = async (
       const productImages = await tx
         .update(ProductImages)
         .set({
-          productId: product.id,
+          productId: product.productId,
         })
         .where(
           inArray(
@@ -122,7 +120,7 @@ export const CreateProductAction = async (
             ...validatedFields.data.productFeatures.map(
               ({ featureId, featureName }) =>
                 ({
-                  productId: product.id,
+                  productId: product.productId,
                   featureId,
                   featureName,
                 }) satisfies ProductFeaturesTypeForDbInsert,
@@ -151,7 +149,7 @@ export const CreateProductAction = async (
       }
 
       return {
-        productId: product.id,
+        productId: product.productId,
       };
     });
 
