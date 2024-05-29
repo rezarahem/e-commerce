@@ -176,6 +176,20 @@
       "when": 1716745071967,
       "tag": "0024_real_rafael_vega",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1716977966613,
+      "tag": "0025_organic_gravity",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1716978441005,
+      "tag": "0026_serious_frog_thor",
+      "breakpoints": true
     }
   ]
 }

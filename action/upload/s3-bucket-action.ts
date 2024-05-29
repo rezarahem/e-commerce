@@ -1,11 +1,14 @@
 'use server';
 
+import { drizzleDb } from '@/drizzle/drizzle-db';
+import { ProductImages } from '@/drizzle/schema';
 import { FileArraySchema } from '@/zod';
 import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
+import { eq, inArray } from 'drizzle-orm';
 
 const s3 = new S3Client({
   region: 'default',
@@ -16,35 +19,34 @@ const s3 = new S3Client({
   },
 });
 
-export const S3UploadAction = async (
+export const S3UploadAllImagesToBucketAndDbAction = async (
   data: FormData,
-): Promise<
-  | {
-      success: boolean;
-      imagesUrl: string[];
-      errorMessage: string;
+): Promise<{
+  success: boolean;
+  images?: {
+    id: number;
+    url: string;
+  }[];
+  errorMessage?: string;
+}> => {
+  const filesArray: File[] = [];
+  const imagesUrl: string[] = [];
+
+  for (const [, file] of data.entries()) {
+    if (file instanceof File) {
+      filesArray.push(file);
     }
-  | undefined
-> => {
+  }
+
+  const validatedFiles = FileArraySchema.safeParse(filesArray);
+  if (!validatedFiles.success) {
+    return {
+      success: false,
+      errorMessage: 'Invalid Inputs',
+    };
+  }
   try {
-    const filesArray: File[] = [];
-    const imagesUrl: string[] = [];
-
-    for (const [, file] of data.entries()) {
-      if (file instanceof File) {
-        filesArray.push(file);
-      }
-    }
-
-    const validatedFiles = FileArraySchema.safeParse(filesArray);
-    if (!validatedFiles.success) {
-      return {
-        success: false,
-        imagesUrl,
-        errorMessage: 'فایل غیر مجاز',
-      };
-    }
-
+    // upload
     for (const file of filesArray) {
       try {
         const bytes = await file.arrayBuffer();
@@ -67,38 +69,66 @@ export const S3UploadAction = async (
           );
         }
       } catch (error) {
-        console.log('[S3UploadAction - single]', error);
+        console.log('[S3UploadAllImagesToBucketAndDbAction - single]', error);
       }
+    }
+
+    // write to the db
+    if (imagesUrl.length === 0) {
+      return {
+        success: false,
+        errorMessage: 'Operation Failed',
+      };
+    }
+
+    const images = await drizzleDb
+      .insert(ProductImages)
+      .values(
+        imagesUrl.map((url) => ({
+          url,
+        })),
+      )
+      .returning({
+        id: ProductImages.id,
+        url: ProductImages.url,
+      });
+
+    if (!images || images.length === 0) {
+      return {
+        success: false,
+        errorMessage: 'Operation Failed',
+      };
     }
 
     return {
       success: true,
-      imagesUrl,
+      images,
       errorMessage: '',
     };
   } catch (error) {
-    console.log('[S3UploadAction]', error);
+    console.log('[S3UploadAllImagesToBucketAndDbAction]', error);
+    return {
+      success: true,
+    };
   }
 };
 
-export const S3DeleteAction = async (
-  url: string,
-): Promise<
-  | {
-      success: boolean;
-      errorMessage: string;
-    }
-  | undefined
-> => {
+export const S3DeleteImageFromBucketAndDbAction = async (image: {
+  id: number;
+  url: string;
+}): Promise<{
+  success: boolean;
+  errorMessage?: string;
+}> => {
   try {
-    if (!url) {
+    if (!image) {
       return {
         success: false,
         errorMessage: 'Invalid Inputs',
       };
     }
 
-    const segments = url.split('/');
+    const segments = image.url.split('/');
     const fileKey = segments[segments.length - 1];
 
     if (!fileKey) {
@@ -120,13 +150,153 @@ export const S3DeleteAction = async (
         success: false,
         errorMessage: 'Operation failed',
       };
-    } else {
+    }
+
+    const [deletedImage] = await drizzleDb
+      .delete(ProductImages)
+      .where(eq(ProductImages.id, image.id))
+      .returning();
+
+    if (!deletedImage) {
       return {
-        success: true,
-        errorMessage: '',
+        success: false,
+        errorMessage: 'Operation failed',
       };
     }
+
+    return {
+      success: true,
+    };
   } catch (error) {
-    console.log('[S3DeleteAction]', error);
+    console.log('[S3DeleteImageFromBucketAndDbAction]', error);
+    return {
+      success: false,
+      errorMessage: 'Internal Error',
+    };
+  }
+};
+
+export const S3DeleteAllImagesFromBucketAndDbAction = async (
+  images: {
+    id: number;
+    url: string;
+  }[],
+): Promise<{
+  success: boolean;
+  errorMessage?: string;
+}> => {
+  if (!images || images.length === 0) {
+    return {
+      success: false,
+      errorMessage: 'Invalid Inputs',
+    };
+  }
+  try {
+    for (const image of images) {
+      try {
+        const segments = image.url.split('/');
+        const fileKey = segments[segments.length - 1];
+
+        if (!fileKey) {
+          return {
+            success: false,
+            errorMessage: 'Invalid Inputs',
+          };
+        }
+
+        const params = {
+          Bucket: process.env.LIARA_BUCKET_NAME as string,
+          Key: fileKey,
+        };
+
+        const res = await s3.send(new DeleteObjectCommand(params));
+
+        if (res.$metadata.httpStatusCode !== 204) {
+          return {
+            success: false,
+            errorMessage: 'Operation failed',
+          };
+        }
+      } catch (error) {
+        console.log('[S3DeleteAllImagesFromBucketAndDbAction - single]', error);
+      }
+    }
+
+    const deletedImages = await drizzleDb
+      .delete(ProductImages)
+      .where(
+        inArray(
+          ProductImages.id,
+          images.map((image) => image.id),
+        ),
+      )
+      .returning();
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.log('[S3DeleteAllImagesFromBucketAndDbAction]', error);
+    return {
+      success: false,
+      errorMessage: 'Internal Error',
+    };
+  }
+};
+
+export const S3DeleteAllImagesOnlyFromBucket = async (
+  images: {
+    id: number;
+    url: string;
+  }[],
+): Promise<{
+  success: boolean;
+  errorMessage?: string;
+}> => {
+  if (!images || images.length === 0) {
+    return {
+      success: false,
+      errorMessage: 'Invalid Inputs',
+    };
+  }
+  try {
+    for (const image of images) {
+      try {
+        const segments = image.url.split('/');
+        const fileKey = segments[segments.length - 1];
+
+        if (!fileKey) {
+          return {
+            success: false,
+            errorMessage: 'Invalid Inputs',
+          };
+        }
+
+        const params = {
+          Bucket: process.env.LIARA_BUCKET_NAME as string,
+          Key: fileKey,
+        };
+
+        const res = await s3.send(new DeleteObjectCommand(params));
+
+        if (res.$metadata.httpStatusCode !== 204) {
+          return {
+            success: false,
+            errorMessage: 'Operation failed',
+          };
+        }
+      } catch (error) {
+        console.log('[S3DeleteAllImagesOnlyFromBucket - single]', error);
+      }
+    }
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.log('[S3DeleteAllImagesOnlyFromBucket]', error);
+    return {
+      success: false,
+      errorMessage: 'Internal Error',
+    };
   }
 };

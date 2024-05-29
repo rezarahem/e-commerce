@@ -5,6 +5,7 @@ import { Product } from '@/drizzle/schema';
 import { ProductFeatureSchema } from '@/zod';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import * as z from 'zod';
 
 const ProuductFormPage = async ({
@@ -45,7 +46,10 @@ const ProuductFormPage = async ({
   //   pairs: { featureKey: string; featureValue: string }[];
   // }[];
 
-  const productImages = product?.images.map((image) => image.url);
+  const productImages = product?.images.map((image) => ({
+    id: image.id,
+    url: image.url,
+  }));
 
   const productFeatures: z.infer<typeof ProductFeatureSchema>[] | undefined =
     product?.productFeatures.map((f) => ({

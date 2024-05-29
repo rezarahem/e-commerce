@@ -50,6 +50,7 @@ import {
 import { redirect, useRouter } from 'next/navigation';
 import {
   ChangeEvent,
+  Suspense,
   useCallback,
   useEffect,
   useRef,
@@ -76,8 +77,10 @@ import {
 } from '@/lib/persian-string';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  S3DeleteAction,
-  S3UploadAction,
+  S3DeleteAllImagesFromBucketAndDbAction,
+  S3DeleteAllImagesOnlyFromBucket,
+  S3DeleteImageFromBucketAndDbAction,
+  S3UploadAllImagesToBucketAndDbAction,
 } from '@/action/upload/s3-bucket-action';
 import toast from 'react-hot-toast';
 import ProductFormFeatures from './product-form-features';
@@ -88,10 +91,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { DeleteProductAction } from '@/action/control/proudct/delete-product-action';
 
 type ProductFormProps = {
   product: typeof productSchema.$inferSelect | undefined;
-  productImages: string[] | undefined;
+  productImages: { id?: number; url: string }[] | undefined;
   productFeatures: z.infer<typeof ProductFeatureSchema>[] | undefined;
   relatedCategoriesId: { id: number }[] | undefined;
   allCategories: (typeof categorySchema.$inferSelect)[];
@@ -106,6 +110,7 @@ const ProductForm = ({
   relatedCategoriesId,
   allCategories,
 }: ProductFormProps) => {
+  const isUpdating = !!product;
   const [isPending, startTransition] = useTransition();
   const [openAlertModal, setOpenAlertModal] = useState(false);
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -131,9 +136,6 @@ const ProductForm = ({
       },
     ],
   );
-
-  // const router = useRouter();
-
   // const validatedFiles = FileListSchema.safeParse(imageFiles);
   // if (!validatedFiles.success) {
   //   const errorArray = validatedFiles.error.errors;
@@ -248,7 +250,7 @@ const ProductForm = ({
         imageFiles.forEach((file) => {
           formData.append('files', file);
         });
-        const res = await S3UploadAction(formData);
+        const res = await S3UploadAllImagesToBucketAndDbAction(formData);
 
         if (!res) {
           toast.error('خطایی رخ داد');
@@ -256,15 +258,12 @@ const ProductForm = ({
         }
 
         if (!res?.success) {
-          toast.error(res?.errorMessage);
+          toast.error('خطایی رخ داد');
           return;
         }
 
-        if (res.success && res.imagesUrl) {
-          form.setValue('images', [
-            ...form.getValues('images'),
-            ...res.imagesUrl,
-          ]);
+        if (res.success && res.images) {
+          form.setValue('images', [...form.getValues('images'), ...res.images]);
         }
 
         setImageFiles([]);
@@ -274,31 +273,31 @@ const ProductForm = ({
     }
   };
 
-  const onDeleteProductImage = (url: string) => {
+  const onDeleteProductImage = (image: { id: number; url: string }) => {
     try {
       startTransition(async () => {
-        const res = await S3DeleteAction(url);
+        const res = await S3DeleteImageFromBucketAndDbAction(image);
 
         if (!res) {
           toast.error('خطایی رخ داد');
           return;
         }
 
-        if (!res?.success) {
-          toast.error(res?.errorMessage);
+        if (!res?.success && res.errorMessage) {
+          toast.error('خطایی رخ داد');
           return;
         }
 
         if (res.success) {
           // removing the image from thumbnail if IT IS THUMBNAIL
-          if (form.getValues('thumbnailImage') === url) {
+          if (form.getValues('thumbnailImage') === image.url) {
             setThumbnailImageState('');
             form.setValue('thumbnailImage', '');
           }
 
           // removing the image from images url array
           form.setValue('images', [
-            ...form.getValues('images').filter((image) => image !== url),
+            ...form.getValues('images').filter((i) => i.url !== image.url),
           ]);
         }
       });
@@ -307,15 +306,13 @@ const ProductForm = ({
     }
   };
 
-  const onDelete = async () => {};
-
   const onSubmit = (data: ProductFormFieldsTypes) => {
     try {
       startTransition(async () => {
         const validatedFields = ProductFormSchema.safeParse(data);
 
         if (!validatedFields.success) {
-          toast.error('error');
+          toast.error('خطایی رخ داد');
           return;
         }
 
@@ -332,9 +329,73 @@ const ProductForm = ({
         }
 
         if (result.success && result.productId && !result.errorMessage) {
-          toast.success('محصول ایجاد شد');
+          toast.success(toastMessage);
           redirect(`/control/products/${result.productId}`);
         }
+      });
+    } catch (error) {
+      toast.error('خطایی رخ داد');
+    }
+  };
+
+  const onUpdate = (data: ProductFormFieldsTypes) => {
+    console.log('update');
+  };
+
+  const onDelete = () => {
+    try {
+      startTransition(async () => {
+        const validatedFields = ProductFormSchema.safeParse(form.getValues());
+
+        if (!validatedFields.success) {
+          toast.error('خطایی رخ داد');
+          return;
+        }
+
+        let allowedToCarryOn: {
+          ok: boolean;
+        } = {
+          ok: true,
+        };
+
+        if (validatedFields.data.images.length > 0) {
+          const deleteImagesResponse = await S3DeleteAllImagesOnlyFromBucket(
+            validatedFields.data.images,
+          );
+
+          if (
+            !deleteImagesResponse.success &&
+            deleteImagesResponse.errorMessage
+          ) {
+            allowedToCarryOn.ok = false;
+          } else {
+            form.setValue('thumbnailImage', '');
+            form.setValue('images', []);
+            allowedToCarryOn.ok = true;
+          }
+        }
+
+        if (!allowedToCarryOn.ok) {
+          toast.error('خطایی رخ داد');
+          return;
+        }
+
+        const deletedProduct = await DeleteProductAction(product?.id as number);
+
+        if (!deletedProduct.success && deletedProduct.errorMessage) {
+          toast.error('خطایی رخ داد');
+          return;
+        }
+
+        setOpenAlertModal(false);
+        toast.success(toastMessage);
+        redirect('/control/products');
+
+        // if (allowedToCarryOn.ok) {
+        //   toast.success('cool');
+        // }
+        //
+        //
       });
     } catch (error) {
       toast.error('خطایی رخ داد');
@@ -364,7 +425,10 @@ const ProductForm = ({
       </div>
       <Separator />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+        <form
+          onSubmit={form.handleSubmit(!isUpdating ? onSubmit : onUpdate)}
+          className='space-y-8'
+        >
           <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
             <FormField
               control={form.control}
@@ -718,9 +782,9 @@ const ProductForm = ({
 
                       {field.value.length > 0 && (
                         <div className='grid grid-cols-2 gap-4 lg:grid-cols-6'>
-                          {field.value.map((url) => (
+                          {field.value.map(({ id, url }) => (
                             <div
-                              key={url}
+                              key={id}
                               className='relative aspect-square overflow-hidden rounded-md'
                             >
                               <div className='absolute left-2 top-2 z-10'>
@@ -731,7 +795,10 @@ const ProductForm = ({
                                   disabled={isPending}
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    onDeleteProductImage(url);
+                                    onDeleteProductImage({
+                                      id,
+                                      url,
+                                    });
                                   }}
                                 >
                                   <Trash className='size-4' />

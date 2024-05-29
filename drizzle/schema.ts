@@ -81,7 +81,9 @@ export const ProductRelations = relations(Product, ({ one, many }) => ({
 export const ProductImages = pgTable('product_images', {
   id: serial('id').primaryKey(),
   url: text('url').notNull(),
-  productId: integer('product_id'),
+  productId: integer('product_id').references(() => Product.id, {
+    onDelete: 'cascade',
+  }),
 });
 
 export const ProductIamgesRelations = relations(ProductImages, ({ one }) => ({
@@ -95,7 +97,9 @@ export const ProductFeatures = pgTable('product_features', {
   id: serial('id').primaryKey(),
   featureId: text('feature_id').notNull(),
   featureName: text('feature_name'),
-  productId: integer('product_id'),
+  productId: integer('product_id').references(() => Product.id, {
+    onDelete: 'cascade',
+  }),
 });
 
 export const ProductFeaturesRelations = relations(
@@ -114,7 +118,10 @@ export const ProductFeaturePairs = pgTable('product_feature_pairs', {
   pairId: text('pair_id').notNull(),
   pairKey: text('pair_key').notNull(),
   pairValue: text('pair_value').notNull(),
-  productFeatureId: integer('product_feature_id'),
+  productFeatureId: integer('product_feature_id').references(
+    () => ProductFeatures.id,
+    { onDelete: 'cascade' },
+  ),
 });
 
 export const ProductFeaturePairsRelations = relations(
@@ -132,10 +139,10 @@ export const ProductToCategory = pgTable(
   {
     productId: integer('product_id')
       .notNull()
-      .references(() => Product.id),
+      .references(() => Product.id, { onDelete: 'cascade' }),
     categoryId: integer('category_id')
       .notNull()
-      .references(() => Category.id),
+      .references(() => Category.id, { onDelete: 'cascade' }),
   },
   (t) => ({
     pk: primaryKey({ columns: [t.productId, t.categoryId] }),

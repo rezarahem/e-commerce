@@ -9,6 +9,7 @@ import {
   ProductToCategory,
 } from '@/drizzle/schema';
 import { ProductFormSchema } from '@/zod';
+import { inArray } from 'drizzle-orm';
 import * as z from 'zod';
 
 type ProductTypeForDbInsert = typeof Product.$inferInsert;
@@ -29,6 +30,8 @@ export const CreateProductAction = async (
   if (!validatedFields.success) {
     return { success: false, errorMessage: 'Invalid fields' };
   }
+
+  const imgaes = validatedFields.data.images;
 
   const productData = {
     productName: validatedFields.data.productName,
@@ -80,17 +83,30 @@ export const CreateProductAction = async (
       // }
 
       const productImages = await tx
-        .insert(ProductImages)
-        .values([
-          ...validatedFields.data.images.map(
-            (url) =>
-              ({
-                productId: product.id,
-                url,
-              }) satisfies ProductImagesTypeForDbInsert,
+        .update(ProductImages)
+        .set({
+          productId: product.id,
+        })
+        .where(
+          inArray(
+            ProductImages.id,
+            validatedFields.data.images.map((image) => image.id),
           ),
-        ])
+        )
         .returning();
+
+      // const productImages = await tx
+      //   .insert(ProductImages)
+      //   .values([
+      //     ...validatedFields.data.images.map(
+      //       ({ url }) =>
+      //         ({
+      //           productId: product.id,
+      //           url,
+      //         }) satisfies ProductImagesTypeForDbInsert,
+      //     ),
+      //   ])
+      //   .returning();
 
       // if (productImages.length === 0) {
       //   return {

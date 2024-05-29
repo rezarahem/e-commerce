@@ -130,7 +130,13 @@ export const ProductFormSchema = z
       ),
     productDescription: z.string().optional(),
     thumbnailImage: z.string(),
-    images: z.string().array().min(1, 'آپلود حداقل یک تصویر الزامی است.'),
+    images: z
+      .object({
+        id: z.number(),
+        url: z.string(),
+      })
+      .array()
+      .min(1, 'آپلود حداقل یک تصویر الزامی است.'),
     productFeatures: ProductFeaturesArraySchema,
   })
   .superRefine(
