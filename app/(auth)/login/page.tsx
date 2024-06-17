@@ -8,7 +8,7 @@ const LoginPage = async () => {
   if (session?.user.id) redirect('/');
 
   return (
-    <div className='flex h-full items-center justify-center'>
+    <div className='flex h-dvh items-center justify-center'>
       <LoginForm />
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { Category as schemaCategory } from '@/drizzle/schema';
-import { CategoryFormShema } from '@/zod';
+import { CategoryFormSchema } from '@/zod';
 import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,7 +37,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { UpdateCategoryAction } from '@/action/control/category/update-category-action';
 import { CreateCategoryAction } from '@/action/control/category/create-category-action';
 import { DeleteCategoryAction } from '@/action/control/category/delete-category-action';
@@ -47,7 +47,7 @@ type CategoryFormProps = {
   allCategories: (typeof schemaCategory.$inferSelect)[];
 };
 
-type CategoryFormFieldTypes = z.infer<typeof CategoryFormShema>;
+type CategoryFormFieldTypes = z.infer<typeof CategoryFormSchema>;
 
 const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
   const [isPending, startTransition] = useTransition();
@@ -67,7 +67,7 @@ const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
   );
 
   const form = useForm<CategoryFormFieldTypes>({
-    resolver: zodResolver(CategoryFormShema),
+    resolver: zodResolver(CategoryFormSchema),
     defaultValues: {
       categoryName: category?.categoryName ?? '',
       categoryAddressName:
@@ -79,28 +79,31 @@ const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
   });
 
   const onSubmit = async (data: CategoryFormFieldTypes) => {
-    const correctFormateCategoryAddressName = data.categoryAddressName
-      .split(' ')
-      .join('-');
-
-    data = {
-      ...data,
-      categoryAddressName: correctFormateCategoryAddressName,
-    };
-
     try {
       startTransition(async () => {
-        if (category) {
-          const result = await UpdateCategoryAction(data);
-          if (!result) throw new Error();
-        } else {
-          const result = await CreateCategoryAction(data);
-          if (!result) throw new Error();
+        const validatedFields = CategoryFormSchema.safeParse(data);
+
+        if (!validatedFields.success) {
+          toast.error('خطایی رخ داد');
+          return;
+        }
+
+        const result = await CreateCategoryAction(data);
+
+        if (!result.success) {
+          toast.error('خطایی رخ داد، لطفا چند دقیقه دیگر تلاش کنید.');
+          return;
+        }
+
+        if (
+          result.success &&
+          result.categoryAddressName &&
+          !result.errorMessage
+        ) {
+          toast.success(toastMessage);
+          redirect(`/control/categories/${result.categoryAddressName}`);
         }
       });
-      router.refresh();
-      router.push('/control/categories');
-      toast.success(toastMessage);
     } catch (error) {
       toast.error('خطایی رخ داد');
     }

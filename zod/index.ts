@@ -5,7 +5,7 @@ export const LoginSchema = z.object({
   phone: z.string().min(1),
 });
 
-export const CategoryFormShema = z.object({
+export const CategoryFormSchema = z.object({
   categoryName: z
     .string({ required_error: 'ثبت عنوان دسته‌بندی الزامی است.' })
     .min(3, 'نام دسته‌بندی حداقل باید ۳ حرف باشد.')
@@ -26,7 +26,8 @@ export const CategoryFormShema = z.object({
       {
         message: 'حروف فارسی غیر مجاز است',
       },
-    ),
+    )
+    .transform((value) => value.split(' ').join('-')),
   parentCategorytId: z.number().optional(),
   currentCategoryId: z.number().optional(),
 });
@@ -151,7 +152,6 @@ export const ProductFormSchema = z
       //     path: ['categories'],
       //     fatal: true,
       //   });
-
       //   return z.NEVER;
       // }
 

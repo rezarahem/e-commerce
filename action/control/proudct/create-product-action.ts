@@ -27,6 +27,7 @@ export const CreateProductAction = async (
   errorMessage?: string;
 }> => {
   const validatedFields = ProductFormSchema.safeParse(data);
+
   if (!validatedFields.success) {
     return { success: false, errorMessage: 'Invalid fields' };
   }

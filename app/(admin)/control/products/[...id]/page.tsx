@@ -5,7 +5,6 @@ import { Product } from '@/drizzle/schema';
 import { ProductFeatureSchema } from '@/zod';
 import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
 import * as z from 'zod';
 
 const ProuductFormPage = async ({

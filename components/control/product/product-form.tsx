@@ -205,7 +205,7 @@ const ProductForm = ({
             `${String(product?.price).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`,
           )
         : '',
-      specialPrice: product
+      specialPrice: product?.specialPrice
         ? toPersianNumber(
             `${String(product?.specialPrice).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`,
           )

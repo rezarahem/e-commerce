@@ -45,6 +45,7 @@ const ControlNavLinks = ({ className }: ControlNavLinksProps) => {
         <Link
           key={route.href}
           href={route.href}
+          prefetch={false}
           className={cn(
             'text-sm font-medium transition-colors hover:text-primary',
             route.active ? 'text-black' : 'text-muted-foreground',

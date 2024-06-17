@@ -1,18 +1,19 @@
 'use server';
 
 import * as z from 'zod';
-import { CategoryFormShema } from '@/zod';
+import { CategoryFormSchema } from '@/zod';
 import { drizzleDb } from '@/drizzle/drizzle-db';
 import { Category as categorySchema } from '@/drizzle/schema';
 import { revalidatePath } from 'next/cache';
 
 export const CreateCategoryAction = async (
-  data: z.infer<typeof CategoryFormShema>,
+  data: z.infer<typeof CategoryFormSchema>,
 ): Promise<{
   success: boolean;
+  categoryAddressName?: string;
   errorMessage?: string;
 }> => {
-  const validatedFields = CategoryFormShema.safeParse(data);
+  const validatedFields = CategoryFormSchema.safeParse(data);
 
   if (!validatedFields.success) {
     return { success: false, errorMessage: 'Invalid fields' };
@@ -35,7 +36,7 @@ export const CreateCategoryAction = async (
 
     revalidatePath('/control/categories');
 
-    return { success: true };
+    return { success: true, categoryAddressName: category.categoryAddressName };
   } catch (error) {
     console.log('[CreateCategoryAction]', error);
     return { success: false, errorMessage: 'Internal Error' };

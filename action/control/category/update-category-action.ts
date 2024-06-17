@@ -1,15 +1,15 @@
 'use server';
 
 import { drizzleDb } from '@/drizzle/drizzle-db';
-import { CategoryFormShema } from '@/zod';
+import { CategoryFormSchema } from '@/zod';
 import * as z from 'zod';
 import { Category as categorySchema } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
 
 export const UpdateCategoryAction = async (
-  data: z.infer<typeof CategoryFormShema>,
+  data: z.infer<typeof CategoryFormSchema>,
 ) => {
-  const validatedFields = CategoryFormShema.safeParse(data);
+  const validatedFields = CategoryFormSchema.safeParse(data);
   if (!validatedFields.success) {
     return { success: false, errorMessage: 'Invalid fields' };
   }

@@ -4,7 +4,7 @@ const nextConfig = {
         remotePatterns: [
             {
                 protocol: 'https',
-                hostname: 'movie-app.storage.iran.liara.space'
+                hostname: 'e-commerce.storage.iran.liara.space'
             }
         ]
     },
