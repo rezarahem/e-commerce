@@ -8,7 +8,10 @@ import { revalidatePath } from 'next/cache';
 
 export const CreateCategoryAction = async (
   data: z.infer<typeof CategoryFormShema>,
-) => {
+): Promise<{
+  success: boolean;
+  errorMessage?: string;
+}> => {
   const validatedFields = CategoryFormShema.safeParse(data);
 
   if (!validatedFields.success) {
@@ -31,8 +34,10 @@ export const CreateCategoryAction = async (
     if (!category) return { success: false, errorMessage: 'operation failed' };
 
     revalidatePath('/control/categories');
-    return { success: true, errorMessage: '' };
+
+    return { success: true };
   } catch (error) {
     console.log('[CreateCategoryAction]', error);
+    return { success: false, errorMessage: 'Internal Error' };
   }
 };

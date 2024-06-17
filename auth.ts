@@ -20,7 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (validatedFields.success) {
           const { phone } = validatedFields.data;
 
-          const user = await drizzleDb.query.users.findFirst({
+          const user = await drizzleDb.query.Users.findFirst({
             where: (users, { eq }) => eq(users.phone, phone),
           });
 

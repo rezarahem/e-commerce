@@ -2,13 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
+/* @layer base {
   html,
   body,
   :root {
     height: 100%;
   }
-}
+} */
 
 @layer base {
   :root {

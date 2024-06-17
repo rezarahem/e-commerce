@@ -162,3 +162,12 @@ export const ProductToCategoryRelations = relations(
     }),
   }),
 );
+
+export const Faker = pgTable('faker', {
+  id: serial('id').primaryKey(),
+  productName: text('product_name').notNull(),
+  price: integer('price').notNull(),
+  thumbnailImage: text('thumbnail_image').notNull(),
+  createdAt: timestamp('created_at', { mode: 'string' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'string' }).notNull().defaultNow(),
+});

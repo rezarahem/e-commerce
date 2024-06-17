@@ -4,20 +4,12 @@ import './globals.css';
 import { ToastProvider } from '@/providers/toast-provider';
 import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/providers/theme-provider';
-// import { Jersey_15 } from 'next/font/google';
 
 const mainFont = localFont({
   src: '../fonts/IRANSansXV.woff2',
   variable: '--font-iransansxv',
   display: 'block',
 });
-
-// const jersey = Jersey_15({
-//   weight: '400',
-//   subsets: ['latin'],
-//   display: 'block',
-//   variable: '--font-jersey',
-// });
 
 export const metadata: Metadata = {
   title: 'Create Next App',

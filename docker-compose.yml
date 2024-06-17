@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    container_name: ecom-db
+    environment:
+      POSTGRES_USER: ecom
+      POSTGRES_PASSWORD: ecom
+      POSTGRES_DB: ecom
+    ports:
+      - "7000:5432"
+    volumes:
+      - my_dbdata:/var/lib/postgresql/data
+
+volumes:
+  my_dbdata:
