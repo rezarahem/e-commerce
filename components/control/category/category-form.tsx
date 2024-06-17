@@ -48,8 +48,12 @@ type CategoryFormProps = {
 };
 
 type CategoryFormFieldTypes = z.infer<typeof CategoryFormSchema>;
+// type CategoryFormFieldTypes = z.infer<
+//   typeof schemaCategory.$inferSelect | undefined
+// >;
 
 const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
+  const isUpdating = !!category;
   const [isPending, startTransition] = useTransition();
   const [openAlertModal, setOpenAlertModal] = useState(false);
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -73,12 +77,12 @@ const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
       categoryAddressName:
         category?.categoryAddressName.split('-').join(' ') ?? '',
       // ?? types? 👇
-      parentCategorytId: category?.parentId ?? undefined,
+      parentCategorytId: category?.parentId ?? null,
       currentCategoryId: category?.id ?? undefined,
     },
   });
 
-  const onSubmit = async (data: CategoryFormFieldTypes) => {
+  const onSubmit = (data: CategoryFormFieldTypes) => {
     try {
       startTransition(async () => {
         const validatedFields = CategoryFormSchema.safeParse(data);
@@ -88,7 +92,7 @@ const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
           return;
         }
 
-        const result = await CreateCategoryAction(data);
+        const result = await CreateCategoryAction(validatedFields.data);
 
         if (!result.success) {
           toast.error('خطایی رخ داد، لطفا چند دقیقه دیگر تلاش کنید.');
@@ -109,11 +113,44 @@ const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
     }
   };
 
-  const onDelete = async () => {
+  const onUpdate = (data: CategoryFormFieldTypes) => {
     try {
-      const result = await DeleteCategoryAction(category?.id);
-      router.push('/control/categories');
-      toast.success('دسته‌بندی حذف شد');
+      startTransition(async () => {
+        const validatedFields = CategoryFormSchema.safeParse(data);
+
+        if (!validatedFields.success) {
+          toast.error('خطایی رخ داد');
+          return;
+        }
+
+        const result = await UpdateCategoryAction(validatedFields.data);
+
+        if (!result.success) {
+          toast.error('خطایی رخ داد، لطفا چند دقیقه دیگر تلاش کنید.');
+          return;
+        }
+
+        if (
+          result.success &&
+          result.categoryAddressName &&
+          !result.errorMessage
+        ) {
+          toast.success(toastMessage);
+          redirect(`/control/categories/${result.categoryAddressName}`);
+        }
+      });
+    } catch (error) {
+      toast.error('خطایی رخ داد');
+    }
+  };
+
+  const onDelete = () => {
+    try {
+      startTransition(async () => {
+        const result = await DeleteCategoryAction(category?.id);
+        toast.success('دسته‌بندی حذف شد');
+        redirect('/control/categories');
+      });
     } catch (error) {
       toast.error('خطایی رخ داد');
     }
@@ -142,7 +179,10 @@ const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
       </div>
       <Separator />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+        <form
+          onSubmit={form.handleSubmit(!isUpdating ? onSubmit : onUpdate)}
+          className='space-y-8'
+        >
           <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
             <FormField
               control={form.control}
@@ -211,7 +251,7 @@ const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
                         <CommandEmpty>نتیجه یافت نشد</CommandEmpty>
                         <CommandGroup>
                           <CommandList>
-                            {allCategories.map((category) => (
+                            {categoriesArrayForCombobox.map((category) => (
                               <CommandItem
                                 value={category.categoryName}
                                 key={category.id}
@@ -226,10 +266,7 @@ const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
                                       category.id,
                                     );
                                   } else {
-                                    form.setValue(
-                                      'parentCategorytId',
-                                      undefined,
-                                    );
+                                    form.setValue('parentCategorytId', null);
                                   }
                                 }}
                               >

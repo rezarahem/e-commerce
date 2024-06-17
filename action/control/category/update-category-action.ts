@@ -3,42 +3,51 @@
 import { drizzleDb } from '@/drizzle/drizzle-db';
 import { CategoryFormSchema } from '@/zod';
 import * as z from 'zod';
-import { Category as categorySchema } from '@/drizzle/schema';
+import { Category } from '@/drizzle/schema';
 import { eq } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 
 export const UpdateCategoryAction = async (
   data: z.infer<typeof CategoryFormSchema>,
-) => {
-  const validatedFields = CategoryFormSchema.safeParse(data);
-  if (!validatedFields.success) {
-    return { success: false, errorMessage: 'Invalid fields' };
-  }
-
-  const {
-    categoryAddressName,
-    categoryName,
-    parentCategorytId,
-    currentCategoryId,
-  } = validatedFields.data;
-
-  if (!currentCategoryId) {
-    return { success: false, errorMessage: 'Invalid fields' };
-  }
-
+): Promise<{
+  success: boolean;
+  categoryAddressName?: string;
+  errorMessage?: string;
+}> => {
   try {
+    const validatedFields = CategoryFormSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+      return { success: false, errorMessage: 'Invalid fields' };
+    }
+
+    const {
+      categoryAddressName,
+      categoryName,
+      parentCategorytId,
+      currentCategoryId,
+    } = validatedFields.data;
+
+    if (!currentCategoryId) {
+      return { success: false, errorMessage: 'Invalid fields' };
+    }
+
     const [category] = await drizzleDb
-      .update(categorySchema)
+      .update(Category)
       .set({
         categoryName,
         categoryAddressName,
         parentId: parentCategorytId ? parentCategorytId : null,
       })
-      .where(eq(categorySchema.id, currentCategoryId))
+      .where(eq(Category.id, currentCategoryId))
       .returning();
 
     if (!category) return { success: false, errorMessage: 'operation failed' };
-    return { success: true, errorMessage: '' };
+
+    revalidatePath(`control/categories/${category.categoryAddressName}`);
+    return { success: true, categoryAddressName: category.categoryAddressName };
   } catch (error) {
-    console.log('CREATE-CATEGORY-ACTION', error);
+    console.log('[UpdateCategoryAction]', error);
+    return { success: false, errorMessage: 'Internal Error' };
   }
 };

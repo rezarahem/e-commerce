@@ -28,7 +28,7 @@ export const CategoryFormSchema = z.object({
       },
     )
     .transform((value) => value.split(' ').join('-')),
-  parentCategorytId: z.number().optional(),
+  parentCategorytId: z.number().nullable(),
   currentCategoryId: z.number().optional(),
 });
 

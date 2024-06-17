@@ -26,26 +26,26 @@ export const CreateProductAction = async (
   productId?: number;
   errorMessage?: string;
 }> => {
-  const validatedFields = ProductFormSchema.safeParse(data);
-
-  if (!validatedFields.success) {
-    return { success: false, errorMessage: 'Invalid fields' };
-  }
-
-  const productData = {
-    productName: validatedFields.data.productName,
-    productAddressName: validatedFields.data.productAddressName,
-    price: +validatedFields.data.price,
-    specialPrice: validatedFields.data.specialPrice
-      ? +validatedFields.data.specialPrice
-      : null,
-    inventoryNumber: +validatedFields.data.inventoryNumber,
-    buyLimit: +validatedFields.data.buyLimit,
-    thumbnailImage: validatedFields.data.thumbnailImage,
-    productDescription: validatedFields.data.productDescription,
-  } satisfies ProductTypeForDbInsert;
-
   try {
+    const validatedFields = ProductFormSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+      return { success: false, errorMessage: 'Invalid fields' };
+    }
+
+    const productData = {
+      productName: validatedFields.data.productName,
+      productAddressName: validatedFields.data.productAddressName,
+      price: +validatedFields.data.price,
+      specialPrice: validatedFields.data.specialPrice
+        ? +validatedFields.data.specialPrice
+        : null,
+      inventoryNumber: +validatedFields.data.inventoryNumber,
+      buyLimit: +validatedFields.data.buyLimit,
+      thumbnailImage: validatedFields.data.thumbnailImage,
+      productDescription: validatedFields.data.productDescription,
+    } satisfies ProductTypeForDbInsert;
+
     const { productId } = await drizzleDb.transaction(async (tx) => {
       const [product] = await tx
         .insert(Product)

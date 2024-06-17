@@ -16,6 +16,7 @@ const CategoryFormPage = async ({
   });
 
   const allCategories = await drizzleDb.query.Category.findMany();
+
   return (
     <Container defualtPY className='space-y-3'>
       <CategoryForm category={category} allCategories={allCategories} />

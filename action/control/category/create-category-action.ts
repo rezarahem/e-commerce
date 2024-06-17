@@ -13,16 +13,16 @@ export const CreateCategoryAction = async (
   categoryAddressName?: string;
   errorMessage?: string;
 }> => {
-  const validatedFields = CategoryFormSchema.safeParse(data);
-
-  if (!validatedFields.success) {
-    return { success: false, errorMessage: 'Invalid fields' };
-  }
-
-  const { categoryAddressName, categoryName, parentCategorytId } =
-    validatedFields.data;
-
   try {
+    const validatedFields = CategoryFormSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+      return { success: false, errorMessage: 'Invalid fields' };
+    }
+
+    const { categoryAddressName, categoryName, parentCategorytId } =
+      validatedFields.data;
+
     const [category] = await drizzleDb
       .insert(categorySchema)
       .values({
