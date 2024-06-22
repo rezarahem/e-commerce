@@ -1,6 +1,6 @@
 'use client';
 
-import { Category as schemaCategory } from '@/drizzle/schema';
+import { Category } from '@/drizzle/schema';
 import { CategoryFormSchema } from '@/zod';
 import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
@@ -43,16 +43,22 @@ import { CreateCategoryAction } from '@/action/control/category/create-category-
 import { DeleteCategoryAction } from '@/action/control/category/delete-category-action';
 
 type CategoryFormProps = {
-  category: typeof schemaCategory.$inferSelect | undefined;
-  allCategories: (typeof schemaCategory.$inferSelect)[];
+  category: typeof Category.$inferSelect | undefined;
+  allCategories: (typeof Category.$inferSelect)[];
+  allCategoriesExceptParentTreeOrAllCategories: (typeof Category.$inferSelect)[];
 };
 
 type CategoryFormFieldTypes = z.infer<typeof CategoryFormSchema>;
+
 // type CategoryFormFieldTypes = z.infer<
 //   typeof schemaCategory.$inferSelect | undefined
 // >;
 
-const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
+const CategoryForm = ({
+  category,
+  allCategories,
+  allCategoriesExceptParentTreeOrAllCategories,
+}: CategoryFormProps) => {
   const isUpdating = !!category;
   const [isPending, startTransition] = useTransition();
   const [openAlertModal, setOpenAlertModal] = useState(false);
@@ -66,9 +72,15 @@ const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
   const toastMessage = category ? 'دسته‌بندی بروز شد' : 'دسته‌بندی ایجاد شد';
   const action = category ? 'ذخیره تغییرات' : 'ایجاد';
 
-  const categoriesArrayForCombobox = allCategories.filter(
-    (item) => item.id !== category?.id,
-  );
+  // const categoriesArrayForCombobox =
+  //   allCategoriesExceptParentTreeOrAllCategories;
+
+  // const categoriesArrayForCombobox = allCategories.filter(
+  //   (item) => item.id !== category?.id,
+  // );
+
+  // console.log('combo', categoriesArrayForCombobox);
+  console.log('tree', allCategoriesExceptParentTreeOrAllCategories);
 
   const form = useForm<CategoryFormFieldTypes>({
     resolver: zodResolver(CategoryFormSchema),
@@ -237,7 +249,7 @@ const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
                           })}
                         >
                           {field.value
-                            ? categoriesArrayForCombobox.find(
+                            ? allCategoriesExceptParentTreeOrAllCategories.find(
                                 (category) => category.id === field.value,
                               )?.categoryName
                             : 'انتخاب کنید'}
@@ -251,36 +263,38 @@ const CategoryForm = ({ category, allCategories }: CategoryFormProps) => {
                         <CommandEmpty>نتیجه یافت نشد</CommandEmpty>
                         <CommandGroup>
                           <CommandList>
-                            {categoriesArrayForCombobox.map((category) => (
-                              <CommandItem
-                                value={category.categoryName}
-                                key={category.id}
-                                onSelect={() => {
-                                  if (
-                                    !form.getValues('parentCategorytId') ||
-                                    form.getValues('parentCategorytId') !==
-                                      category.id
-                                  ) {
-                                    form.setValue(
-                                      'parentCategorytId',
-                                      category.id,
-                                    );
-                                  } else {
-                                    form.setValue('parentCategorytId', null);
-                                  }
-                                }}
-                              >
-                                {category.categoryName}
-                                <CheckIcon
-                                  className={cn(
-                                    'mr-auto h-4 w-4',
-                                    category.id === field.value
-                                      ? 'opacity-100'
-                                      : 'opacity-0',
-                                  )}
-                                />
-                              </CommandItem>
-                            ))}
+                            {allCategoriesExceptParentTreeOrAllCategories.map(
+                              (category) => (
+                                <CommandItem
+                                  value={category.categoryName}
+                                  key={category.id}
+                                  onSelect={() => {
+                                    if (
+                                      !form.getValues('parentCategorytId') ||
+                                      form.getValues('parentCategorytId') !==
+                                        category.id
+                                    ) {
+                                      form.setValue(
+                                        'parentCategorytId',
+                                        category.id,
+                                      );
+                                    } else {
+                                      form.setValue('parentCategorytId', null);
+                                    }
+                                  }}
+                                >
+                                  {category.categoryName}
+                                  <CheckIcon
+                                    className={cn(
+                                      'mr-auto h-4 w-4',
+                                      category.id === field.value
+                                        ? 'opacity-100'
+                                        : 'opacity-0',
+                                    )}
+                                  />
+                                </CommandItem>
+                              ),
+                            )}
                           </CommandList>
                         </CommandGroup>
                       </Command>

@@ -218,11 +218,6 @@ export const FileSchema = z
   );
 
 export const FileArraySchema = z.array(FileSchema);
-// .transform((files) =>
-//   files.filter(
-//     (file) => !['image/jpeg', 'image/jpg', 'image/png'].includes(file.type),
-//   ),
-// );
 
 export const testSchema = z.object({
   price: z.string().transform((value) => +value),

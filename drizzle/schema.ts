@@ -6,10 +6,7 @@ import {
   integer,
   pgEnum,
   serial,
-  AnyPgColumn,
   uniqueIndex,
-  numeric,
-  decimal,
 } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'crypto';
 import { relations } from 'drizzle-orm';
