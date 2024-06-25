@@ -1,6 +1,6 @@
 'use client';
 
-import { GetAllCategoriesExceptThisParentAndSubsAction } from '@/action/control/category/get-all-categories-except-this-parent-and-subs-action';
+import { GetAllProductsFromCategoryTreeAction } from '@/action/search/get-all-products-from-category-tree-action';
 import { Button } from '@/components/ui/button';
 
 const HomePage = async () => {
@@ -8,7 +8,7 @@ const HomePage = async () => {
     <div className='space-y-5 p-1'>
       <Button
         onClick={async (e) => {
-          await GetAllCategoriesExceptThisParentAndSubsAction(39);
+          await GetAllProductsFromCategoryTreeAction(36);
         }}
       >
         sql

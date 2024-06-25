@@ -4,7 +4,7 @@ import { drizzleDb } from '@/drizzle/drizzle-db';
 import { Category } from '@/drizzle/schema';
 import { eq, sql } from 'drizzle-orm';
 
-type InferdCategoryType = typeof Category.$inferSelect;
+type InferredCategoryType = typeof Category.$inferSelect;
 
 type CategoryWithSubs = {
   id: number;
@@ -18,11 +18,11 @@ export const GetParentCategoryAndSubcategoriesAction = async (
   categoryId: number,
 ): Promise<{
   success: boolean;
-  flatParentCatAndSubs?: InferdCategoryType[];
+  flatParentCatAndSubs?: InferredCategoryType[];
   errorMessage?: string;
 }> => {
   try {
-    const result: InferdCategoryType[] = await drizzleDb.execute(
+    const result: InferredCategoryType[] = await drizzleDb.execute(
       sql`
       WITH RECURSIVE category_tree AS (
         SELECT
@@ -46,9 +46,9 @@ export const GetParentCategoryAndSubcategoriesAction = async (
       )
       SELECT
         id,
-        category_name,
-        category_address_name,
-        parent_id
+        category_name  AS "categoryName",
+        category_address_name AS "categoryAddressName",
+        parent_id AS "parentId"
       FROM
         category_tree;
     `,
